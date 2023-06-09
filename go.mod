@@ -1,4 +1,4 @@
-module github.com/simonwep/any-db
+module github.com/simonwep/generic-api
 
 go 1.20
 
