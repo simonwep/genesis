@@ -23,6 +23,9 @@ func main() {
 	// Create router
 	router := gin.New()
 
+	// Bind endpoints
+	router.POST("/register", Register)
+
 	// Configure and start server
 	router.SetTrustedProxies(nil)
 	router.Run("localhost:8080")
