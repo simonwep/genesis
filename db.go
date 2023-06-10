@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strings"
 )
 
 var database *badger.DB
@@ -22,8 +21,8 @@ type User struct {
 }
 
 func ValidateUserName(name string) bool {
-	allowedUser := GetEnv("ALLOWED_USERS")
-	return allowedUser == "" || slices.Contains(strings.Split(allowedUser, ","), name)
+	users := Env().AllowedUsers
+	return len(users) == 0 || slices.Contains(users, name)
 }
 
 func CreateUser(name string, password string) error {
@@ -72,7 +71,7 @@ func GetUser(name string, password string) (*User, error) {
 	}
 
 	var user User
-	err := data.Value(func(val []byte) error {
+	err = data.Value(func(val []byte) error {
 		return json.Unmarshal(val, &user)
 	})
 
@@ -86,7 +85,7 @@ func GetUser(name string, password string) (*User, error) {
 }
 
 func checkPassword(user *User, password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil
+	return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil
 }
 
 func init() {
@@ -96,7 +95,7 @@ func init() {
 		log.Fatal(err)
 	}
 
-	dir := path.Join(wd, GetEnv("DB_PATH"))
+	dir := path.Join(wd, Env().DbPath)
 	options := badger.DefaultOptions(dir)
 
 	if db, err := badger.Open(options); err != nil {

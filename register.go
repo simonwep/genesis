@@ -22,7 +22,7 @@ func Register(c *gin.Context) {
 			Err: "PASSWORD_TOO_SHORT",
 		})
 	} else if err := CreateUser(body.User, body.Password); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.Status(http.StatusUnauthorized)
 		log.Printf("Failed to create user: %v", err)
 	} else {
 		c.Status(http.StatusCreated)
