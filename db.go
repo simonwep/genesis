@@ -6,10 +6,15 @@ import (
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
 	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/exp/slices"
 	"log"
 	"os"
 	"path"
+	"strings"
+)
+
+const (
+	DbUserPrefix     = "user:"
+	DbUserDataPrefix = "data:"
 )
 
 var database *badger.DB
@@ -17,12 +22,6 @@ var database *badger.DB
 type User struct {
 	User     string `json:"user"`     // Username
 	Password string `json:"password"` // Hashed password
-	Data     string `json:"data"`     // User data
-}
-
-func ValidateUserName(name string) bool {
-	users := Env().AllowedUsers
-	return len(users) == 0 || slices.Contains(users, name)
 }
 
 func CreateUser(name string, password string) error {
@@ -31,7 +30,7 @@ func CreateUser(name string, password string) error {
 	}
 
 	txn := database.NewTransaction(true)
-	key := []byte(name)
+	key := []byte(DbUserPrefix + name)
 
 	if item, err := txn.Get(key); item != nil {
 		return fmt.Errorf("a user with the name %v already exists", name)
@@ -47,7 +46,6 @@ func CreateUser(name string, password string) error {
 	data, err := json.Marshal(User{
 		User:     name,
 		Password: string(hash),
-		Data:     "{}",
 	})
 
 	if err != nil {
@@ -61,9 +59,21 @@ func CreateUser(name string, password string) error {
 	return nil
 }
 
-func GetUser(name string, password string) (*User, error) {
+func AuthenticateUser(name string, password string) (*User, error) {
+	user, err := GetUser(name)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse data: %v", err)
+	} else if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
+		return nil, errors.New("invalid password")
+	}
+
+	return user, nil
+}
+
+func GetUser(name string) (*User, error) {
 	txn := database.NewTransaction(false)
-	key := []byte(name)
+	key := []byte(DbUserPrefix + name)
 
 	data, err := txn.Get(key)
 	if err != nil {
@@ -71,21 +81,43 @@ func GetUser(name string, password string) (*User, error) {
 	}
 
 	var user User
-	err = data.Value(func(val []byte) error {
+	return &user, data.Value(func(val []byte) error {
 		return json.Unmarshal(val, &user)
 	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse data: %v", err)
-	} else if !checkPassword(&user, password) {
-		return nil, errors.New("invalid password")
-	}
-
-	return &user, nil
 }
 
-func checkPassword(user *User, password string) bool {
-	return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil
+func SetDataForUser(name string, key string, data map[string]interface{}) error {
+	txn := database.NewTransaction(true)
+
+	if data, err := json.Marshal(data); err != nil {
+		return err
+	} else if err := txn.Set([]byte(DbUserDataPrefix+name+":"+key), data); err != nil {
+		return err
+	} else {
+		return txn.Commit()
+	}
+}
+
+func GetAllDataFromUser(name string) (string, error) {
+	txn := database.NewTransaction(false)
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer it.Close()
+
+	prefix := []byte(DbUserDataPrefix + name + ":")
+	data := make([]string, 0)
+
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		err := it.Item().Value(func(v []byte) error {
+			data = append(data, string(v))
+			return nil
+		})
+
+		if err != nil {
+			break
+		}
+	}
+
+	return "[" + strings.Join(data, ",") + "]", nil
 }
 
 func init() {

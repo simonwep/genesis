@@ -12,9 +12,13 @@ func main() {
 	// Create router
 	router := gin.New()
 
-	// Bind endpoints
+	// Auth endpoints
 	router.POST("/login", Login)
 	router.POST("/register", Register)
+
+	// Data endpoints
+	router.PUT("/data/:key", SetData)
+	router.GET("/data", Data)
 
 	// Configure and start server
 	router.SetTrustedProxies(nil)
