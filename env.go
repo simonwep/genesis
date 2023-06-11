@@ -4,17 +4,19 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type Config struct {
-	GinMode      string
-	DbPath       string
-	AllowedUsers []string
-	JWTSecret    []byte
-	JWTExpires   time.Duration
+	GinMode              string
+	DbPath               string
+	JWTSecret            []byte
+	JWTExpires           time.Duration
+	AppAllowedUsers      []string
+	AppAllowedKeyPattern *regexp.Regexp
 }
 
 var (
@@ -37,11 +39,12 @@ func loadEnvVariables() {
 	}
 
 	env = Config{
-		GinMode:      os.Getenv("GIN_MODE"),
-		DbPath:       os.Getenv("DB_PATH"),
-		AllowedUsers: strings.Split(os.Getenv("ALLOWED_USERS"), ","),
-		JWTSecret:    []byte(os.Getenv("JWT_SECRET")),
-		JWTExpires:   time.Duration(parseInt(os.Getenv("JWT_EXPIRES_IN"))) * time.Minute,
+		GinMode:              os.Getenv("GIN_MODE"),
+		DbPath:               os.Getenv("DB_PATH"),
+		JWTSecret:            []byte(os.Getenv("JWT_SECRET")),
+		JWTExpires:           time.Duration(parseInt(os.Getenv("JWT_EXPIRES_IN"))) * time.Minute,
+		AppAllowedUsers:      strings.Split(os.Getenv("APP_ALLOWED_USERS"), ","),
+		AppAllowedKeyPattern: regexp.MustCompile(os.Getenv("APP_KEY_PATTERN")),
 	}
 }
 

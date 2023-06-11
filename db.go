@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strings"
 )
 
 const (
@@ -98,7 +97,7 @@ func SetDataForUser(name string, key string, data map[string]interface{}) error 
 	}
 }
 
-func GetAllDataFromUser(name string) (string, error) {
+func GetAllDataFromUser(name string) ([]byte, error) {
 	txn := database.NewTransaction(false)
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()

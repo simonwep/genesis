@@ -25,6 +25,8 @@ func SetData(c *gin.Context) {
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
+	} else if !Env().AppAllowedKeyPattern.MatchString(key) {
+		c.Status(http.StatusBadRequest)
 	} else if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if err := SetDataForUser(user.User, key, body); err != nil {
