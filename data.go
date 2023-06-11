@@ -14,7 +14,7 @@ func Data(c *gin.Context) {
 	} else if data, err := GetAllDataFromUser(user.User); err != nil {
 		c.Status(http.StatusInternalServerError)
 	} else {
-		c.Data(http.StatusOK, "application/json; charset=utf-8", []byte(data))
+		c.Data(http.StatusOK, "application/json; charset=utf-8", data)
 	}
 }
 

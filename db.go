@@ -103,11 +103,21 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 	defer it.Close()
 
 	prefix := []byte(DbUserDataPrefix + name + ":")
-	data := make([]string, 0)
+	data := make(map[string]interface{}, 0)
 
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-		err := it.Item().Value(func(v []byte) error {
-			data = append(data, string(v))
+		item := it.Item()
+		key := item.Key()
+
+		err := item.Value(func(v []byte) error {
+			var raw map[string]interface{}
+
+			if err := json.Unmarshal(v, &raw); err != nil {
+				return err
+			} else {
+				data[string(key[len(prefix):])] = raw
+			}
+
 			return nil
 		})
 
@@ -116,7 +126,7 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 		}
 	}
 
-	return "[" + strings.Join(data, ",") + "]", nil
+	return json.Marshal(data)
 }
 
 func init() {
