@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"encoding/json"
@@ -24,10 +24,6 @@ type User struct {
 }
 
 func CreateUser(name string, password string) error {
-	if !ValidateUserName(name) {
-		return fmt.Errorf("a user with the name %v cannot be created", name)
-	}
-
 	txn := database.NewTransaction(true)
 	key := []byte(DbUserPrefix + name)
 

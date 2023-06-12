@@ -1,7 +1,8 @@
-package main
+package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/simonwep/genisis/core"
 	"net/http"
 	"strings"
 )
@@ -11,7 +12,7 @@ func Data(c *gin.Context) {
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
-	} else if data, err := GetAllDataFromUser(user.User); err != nil {
+	} else if data, err := core.GetAllDataFromUser(user.User); err != nil {
 		c.Status(http.StatusInternalServerError)
 	} else {
 		c.Data(http.StatusOK, "application/json; charset=utf-8", data)
@@ -25,23 +26,23 @@ func SetData(c *gin.Context) {
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
-	} else if !Env().AppAllowedKeyPattern.MatchString(key) {
+	} else if !core.Env().AppAllowedKeyPattern.MatchString(key) {
 		c.Status(http.StatusBadRequest)
 	} else if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if err := SetDataForUser(user.User, key, body); err != nil {
+	} else if err := core.SetDataForUser(user.User, key, body); err != nil {
 		c.Status(http.StatusInternalServerError)
 	} else {
 		c.Status(http.StatusOK)
 	}
 }
 
-func getUser(c *gin.Context) *User {
+func getUser(c *gin.Context) *core.User {
 	token := strings.Split(c.GetHeader("Authorization"), "Bearer ")[1]
 
-	if parsed, err := ParseAuthToken(token); err != nil {
+	if parsed, err := core.ParseAuthToken(token); err != nil {
 		return nil
-	} else if user, err := GetUser(parsed.User); err != nil {
+	} else if user, err := core.GetUser(parsed.User); err != nil {
 		return nil
 	} else {
 		return user

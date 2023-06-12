@@ -2,23 +2,16 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/simonwep/genisis/core"
+	"github.com/simonwep/genisis/routes"
 )
 
 func main() {
 
 	// Set mode
-	gin.SetMode(Env().GinMode)
+	gin.SetMode(core.Env().GinMode)
 
-	// Create router
-	router := gin.New()
-
-	// Auth endpoints
-	router.POST("/login", Login)
-	router.POST("/register", Register)
-
-	// Data endpoints
-	router.PUT("/data/:key", SetData)
-	router.GET("/data", Data)
+	router := routes.SetupRoutes()
 
 	// Configure and start server
 	router.SetTrustedProxies(nil)

@@ -1,7 +1,8 @@
-package main
+package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/simonwep/genisis/core"
 	"net/http"
 )
 
@@ -15,22 +16,20 @@ func Login(c *gin.Context) {
 
 	if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if !ValidateUserName(body.User) {
-		c.Status(http.StatusUnauthorized)
 	} else {
 		loginUser(c, &body)
 	}
 }
 
 func loginUser(c *gin.Context, login *LoginBody) {
-	user, err := AuthenticateUser(login.User, login.Password)
+	user, err := core.AuthenticateUser(login.User, login.Password)
 
 	if user == nil || err != nil {
 		c.Status(http.StatusUnauthorized)
 		return
 	}
 
-	tokenString, err := CreateAuthToken(user)
+	tokenString, err := core.CreateAuthToken(user)
 
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
