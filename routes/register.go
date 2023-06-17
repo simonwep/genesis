@@ -17,12 +17,9 @@ func Register(c *gin.Context) {
 
 	if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
+		log.Printf("Received invalid body: %v", err)
 	} else if !validateUserName(body.User) {
 		c.Status(http.StatusUnauthorized)
-	} else if len(body.Password) < 8 {
-		c.JSON(http.StatusBadRequest, APIError{
-			Err: "PASSWORD_TOO_SHORT",
-		})
 	} else if err := core.CreateUser(body.User, body.Password); err != nil {
 		c.Status(http.StatusUnauthorized)
 		log.Printf("Failed to create user: %v", err)
@@ -32,6 +29,6 @@ func Register(c *gin.Context) {
 }
 
 func validateUserName(name string) bool {
-	users := core.Env().AppAllowedUsers
+	users := core.Config().AppAllowedUsers
 	return len(users) == 0 || slices.Contains(users, name)
 }

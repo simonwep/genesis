@@ -7,8 +7,6 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"golang.org/x/crypto/bcrypt"
 	"log"
-	"os"
-	"path"
 )
 
 const (
@@ -125,15 +123,12 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 	return json.Marshal(data)
 }
 
+func DropDatabase() error {
+	return database.DropAll()
+}
+
 func init() {
-	wd, err := os.Getwd()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	dir := path.Join(wd, Env().DbPath)
-	options := badger.DefaultOptions(dir)
+	options := badger.DefaultOptions(Config().DbPath)
 
 	if db, err := badger.Open(options); err != nil {
 		log.Fatal(err)

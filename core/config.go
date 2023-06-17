@@ -4,13 +4,16 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type Config struct {
+type AppConfig struct {
 	GinMode              string
 	DbPath               string
 	JWTSecret            []byte
@@ -19,28 +22,20 @@ type Config struct {
 	AppAllowedKeyPattern *regexp.Regexp
 }
 
-var (
-	env       Config
-	envLoaded = false
-)
+var env AppConfig
 
-func Env() *Config {
-	if !envLoaded {
-		loadEnvVariables()
-		envLoaded = true
-	}
-
+func Config() *AppConfig {
 	return &env
 }
 
-func loadEnvVariables() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+func init() {
+	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
+		log.Fatal("Failed to load .env file")
 	}
 
-	env = Config{
+	env = AppConfig{
 		GinMode:              os.Getenv("GIN_MODE"),
-		DbPath:               os.Getenv("DB_PATH"),
+		DbPath:               resolvePath(os.Getenv("DB_PATH")),
 		JWTSecret:            []byte(os.Getenv("JWT_SECRET")),
 		JWTExpires:           time.Duration(parseInt(os.Getenv("JWT_EXPIRES_IN"))) * time.Minute,
 		AppAllowedUsers:      strings.Split(os.Getenv("APP_ALLOWED_USERS"), ","),
@@ -54,4 +49,13 @@ func parseInt(str string) int64 {
 	} else {
 		return value
 	}
+}
+
+func resolvePath(path string) string {
+	return filepath.Join(currentDir(), path)
+}
+
+func currentDir() string {
+	_, filename, _, _ := runtime.Caller(0)
+	return path.Join(path.Dir(filename), "..")
 }
