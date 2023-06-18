@@ -91,6 +91,21 @@ func SetDataForUser(name string, key string, data map[string]interface{}) error 
 	}
 }
 
+func GetDataFromUser(name string, key string) ([]byte, error) {
+	txn := database.NewTransaction(false)
+	item, err := txn.Get([]byte(DbUserDataPrefix + name + ":" + key))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var data []byte
+	return data, item.Value(func(v []byte) error {
+		*&data = v
+		return nil
+	})
+}
+
 func GetAllDataFromUser(name string) ([]byte, error) {
 	txn := database.NewTransaction(false)
 	it := txn.NewIterator(badger.DefaultIteratorOptions)

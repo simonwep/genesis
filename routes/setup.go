@@ -15,6 +15,7 @@ func SetupRoutes() *gin.Engine {
 
 	// Data endpoints
 	router.PUT("/data/:key", SetData)
+	router.GET("/data/:key", DataByKey)
 	router.GET("/data", Data)
 
 	return router
