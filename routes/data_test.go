@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/simonwep/genisis/core"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -15,7 +16,7 @@ func setup(t *testing.T) string {
 		Url:  "/register",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 201, response.Code)
+			assert.Equal(t, http.StatusCreated, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
 		},
 	})
@@ -24,7 +25,7 @@ func setup(t *testing.T) string {
 		Url:  "/login",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 200, response.Code)
+			assert.Equal(t, http.StatusOK, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
 			token = response.Header().Get("Authorization")[7:]
 		},
@@ -40,26 +41,26 @@ func TestGetAllData(t *testing.T) {
 		Url:   "/data",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 200, response.Code)
+			assert.Equal(t, http.StatusOK, response.Code)
 			assert.Equal(t, "{}", response.Body.String())
 		},
 	})
 
-	tryAuthorizedPut(AuthorizedPostConfig{
+	tryAuthorizedPut(AuthorizedBodyConfig{
 		Url:   "/data/bar",
 		Body:  "{\"hello\": \"world!\"}",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 200, response.Code)
+			assert.Equal(t, http.StatusOK, response.Code)
 		},
 	})
 
-	tryAuthorizedPut(AuthorizedPostConfig{
+	tryAuthorizedPut(AuthorizedBodyConfig{
 		Url:   "/data/foo",
 		Body:  "{\"test\": 200}",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 200, response.Code)
+			assert.Equal(t, http.StatusOK, response.Code)
 		},
 	})
 
@@ -67,7 +68,7 @@ func TestGetAllData(t *testing.T) {
 		Url:   "/data",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 200, response.Code)
+			assert.Equal(t, http.StatusOK, response.Code)
 			assert.Equal(t, "{\"bar\":{\"hello\":\"world!\"},\"foo\":{\"test\":200}}", response.Body.String())
 		},
 	})
@@ -76,12 +77,12 @@ func TestGetAllData(t *testing.T) {
 func TestSingleDataSet(t *testing.T) {
 	token := setup(t)
 
-	tryAuthorizedPut(AuthorizedPostConfig{
+	tryAuthorizedPut(AuthorizedBodyConfig{
 		Url:   "/data/bar",
 		Body:  "{\"hello\": \"world!\"}",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 200, response.Code)
+			assert.Equal(t, http.StatusOK, response.Code)
 		},
 	})
 
@@ -89,8 +90,46 @@ func TestSingleDataSet(t *testing.T) {
 		Url:   "/data/bar",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, 200, response.Code)
+			assert.Equal(t, http.StatusOK, response.Code)
 			assert.Equal(t, "{\"hello\":\"world!\"}", response.Body.String())
+		},
+	})
+}
+
+func TestDeleteData(t *testing.T) {
+	token := setup(t)
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar",
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedGet(AuthorizedGetConfig{
+		Url:   "/data/bar",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+			assert.Equal(t, "{\"hello\":\"world!\"}", response.Body.String())
+		},
+	})
+
+	tryAuthorizedDelete(AuthorizedDeleteConfig{
+		Url:   "/data/bar",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedGet(AuthorizedGetConfig{
+		Url:   "/data/bar",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusNotFound, response.Code)
 		},
 	})
 }

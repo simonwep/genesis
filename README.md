@@ -37,3 +37,4 @@ It comes with the following endpoints (so far):
 * `GET /data` - Retrieves all data from a user as object.
 * `GET /data/:key` - Retrieves the data stored for the given `key`.
 * `PUT /data/:key` - Stores / overrides the data for `key`.
+* `DELETE /data/:key` - Removes the data for `key`, always returns `200`, even if `key` doesn't exist.

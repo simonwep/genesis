@@ -19,6 +19,7 @@ func SetupRoutes() *gin.Engine {
 
 	// Data endpoints
 	router.PUT("/data/:key", SetData)
+	router.DELETE("/data/:key", DeleteData)
 	router.GET("/data/:key", DataByKey)
 	router.GET("/data", Data)
 

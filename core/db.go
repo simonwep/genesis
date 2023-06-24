@@ -91,6 +91,16 @@ func SetDataForUser(name string, key string, data map[string]interface{}) error 
 	}
 }
 
+func DeleteDataFromUser(name string, key string) error {
+	txn := database.NewTransaction(true)
+
+	if err := txn.Delete([]byte(DbUserDataPrefix + name + ":" + key)); err != nil {
+		return err
+	} else {
+		return txn.Commit()
+	}
+}
+
 func GetDataFromUser(name string, key string) ([]byte, error) {
 	txn := database.NewTransaction(false)
 	item, err := txn.Get([]byte(DbUserDataPrefix + name + ":" + key))

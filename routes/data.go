@@ -57,6 +57,19 @@ func SetData(c *gin.Context) {
 	}
 }
 
+func DeleteData(c *gin.Context) {
+	key := c.Param("key")
+	user := getUser(c)
+
+	if user == nil {
+		c.Status(http.StatusUnauthorized)
+	} else if err := core.DeleteDataFromUser(user.User, key); err != nil {
+		c.Status(http.StatusInternalServerError)
+	} else {
+		c.Status(http.StatusOK)
+	}
+}
+
 func getUser(c *gin.Context) *core.User {
 	token := strings.Split(c.GetHeader("Authorization"), "Bearer ")[1]
 
