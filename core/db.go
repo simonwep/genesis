@@ -138,8 +138,10 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func DropDatabase() error {
-	return database.DropAll()
+func DropDatabase() {
+	if database.DropAll() != nil {
+		log.Fatal("Failed to drop database")
+	}
 }
 
 func init() {

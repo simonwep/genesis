@@ -16,21 +16,16 @@ func Login(c *gin.Context) {
 
 	if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else {
-		loginUser(c, &body)
+		return
 	}
-}
 
-func loginUser(c *gin.Context, login *LoginBody) {
-	user, err := core.AuthenticateUser(login.User, login.Password)
-
+	user, err := core.AuthenticateUser(body.User, body.Password)
 	if user == nil || err != nil {
 		c.Status(http.StatusUnauthorized)
 		return
 	}
 
 	tokenString, err := core.CreateAuthToken(user)
-
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 	} else {

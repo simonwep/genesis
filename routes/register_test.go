@@ -10,30 +10,27 @@ import (
 func TestRegisterAndLogin(t *testing.T) {
 	core.DropDatabase()
 
-	tryRoute(Config{
-		Method: "POST",
-		Url:    "/register",
-		Body:   "{\"user\": \"foo\", \"password\": \"test\"}",
+	tryUnauthorizedPost(UnauthorizedPostConfig{
+		Url:  "/register",
+		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, 201, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
 		},
 	})
 
-	tryRoute(Config{
-		Method: "POST",
-		Url:    "/login",
-		Body:   "{\"user\": \"foo\", \"password\": \"test\"}",
+	tryUnauthorizedPost(UnauthorizedPostConfig{
+		Url:  "/login",
+		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, 200, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
 		},
 	})
 
-	tryRoute(Config{
-		Method: "POST",
-		Url:    "/login",
-		Body:   "{\"user\": \"foo\", \"password\": \"test2\"}",
+	tryUnauthorizedPost(UnauthorizedPostConfig{
+		Url:  "/login",
+		Body: "{\"user\": \"foo\", \"password\": \"test2\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, 401, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
@@ -44,10 +41,9 @@ func TestRegisterAndLogin(t *testing.T) {
 func TestRegisterIncorrect(t *testing.T) {
 	core.DropDatabase()
 
-	tryRoute(Config{
-		Method: "POST",
-		Url:    "/register",
-		Body:   "{\"user\": \"foo2\", \"password\": \"test\"}",
+	tryUnauthorizedPost(UnauthorizedPostConfig{
+		Url:  "/register",
+		Body: "{\"user\": \"foo2\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, 401, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
@@ -58,20 +54,18 @@ func TestRegisterIncorrect(t *testing.T) {
 func TestRegisterDuplicate(t *testing.T) {
 	core.DropDatabase()
 
-	tryRoute(Config{
-		Method: "POST",
-		Url:    "/register",
-		Body:   "{\"user\": \"foo\", \"password\": \"test\"}",
+	tryUnauthorizedPost(UnauthorizedPostConfig{
+		Url:  "/register",
+		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, 201, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
 		},
 	})
 
-	tryRoute(Config{
-		Method: "POST",
-		Url:    "/register",
-		Body:   "{\"user\": \"foo\", \"password\": \"test\"}",
+	tryUnauthorizedPost(UnauthorizedPostConfig{
+		Url:  "/register",
+		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, 401, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
