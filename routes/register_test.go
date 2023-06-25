@@ -11,8 +11,7 @@ import (
 func TestRegisterAndLogin(t *testing.T) {
 	core.DropDatabase()
 
-	tryUnauthorizedPost(UnauthorizedBodyConfig{
-		Url:  "/register",
+	tryUnauthorizedPost("/register", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusCreated, response.Code)
@@ -20,8 +19,7 @@ func TestRegisterAndLogin(t *testing.T) {
 		},
 	})
 
-	tryUnauthorizedPost(UnauthorizedBodyConfig{
-		Url:  "/login",
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
@@ -29,8 +27,7 @@ func TestRegisterAndLogin(t *testing.T) {
 		},
 	})
 
-	tryUnauthorizedPost(UnauthorizedBodyConfig{
-		Url:  "/login",
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo\", \"password\": \"test2\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusUnauthorized, response.Code)
@@ -42,8 +39,7 @@ func TestRegisterAndLogin(t *testing.T) {
 func TestRegisterIncorrect(t *testing.T) {
 	core.DropDatabase()
 
-	tryUnauthorizedPost(UnauthorizedBodyConfig{
-		Url:  "/register",
+	tryUnauthorizedPost("/register", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo2\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusUnauthorized, response.Code)
@@ -55,8 +51,7 @@ func TestRegisterIncorrect(t *testing.T) {
 func TestRegisterDuplicate(t *testing.T) {
 	core.DropDatabase()
 
-	tryUnauthorizedPost(UnauthorizedBodyConfig{
-		Url:  "/register",
+	tryUnauthorizedPost("/register", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusCreated, response.Code)
@@ -64,8 +59,7 @@ func TestRegisterDuplicate(t *testing.T) {
 		},
 	})
 
-	tryUnauthorizedPost(UnauthorizedBodyConfig{
-		Url:  "/register",
+	tryUnauthorizedPost("/register", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusUnauthorized, response.Code)

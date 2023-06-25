@@ -8,29 +8,26 @@ import (
 )
 
 type UnauthorizedBodyConfig struct {
-	Url     string
 	Body    string
 	Handler func(*httptest.ResponseRecorder)
 }
 
 type AuthorizedConfig struct {
-	Url     string
 	Token   string
 	Handler func(*httptest.ResponseRecorder)
 }
 
 type AuthorizedBodyConfig struct {
-	Url     string
 	Body    string
 	Token   string
 	Handler func(*httptest.ResponseRecorder)
 }
 
-func tryRequest(config AuthorizedConfig, method string, body string) {
+func tryRequest(url, method, body string, config AuthorizedConfig) {
 	router := SetupRoutes()
 
 	response := httptest.NewRecorder()
-	request, _ := http.NewRequest(method, config.Url, strings.NewReader(body))
+	request, _ := http.NewRequest(method, url, strings.NewReader(body))
 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Content-Length", strconv.FormatInt(int64(len(body)), 10))
@@ -40,26 +37,24 @@ func tryRequest(config AuthorizedConfig, method string, body string) {
 	config.Handler(response)
 }
 
-func tryUnauthorizedPost(config UnauthorizedBodyConfig) {
-	tryRequest(AuthorizedConfig{
-		Url:     config.Url,
+func tryUnauthorizedPost(url string, config UnauthorizedBodyConfig) {
+	tryRequest(url, "POST", config.Body, AuthorizedConfig{
 		Token:   "",
 		Handler: config.Handler,
-	}, "POST", config.Body)
+	})
 }
 
-func tryAuthorizedPut(config AuthorizedBodyConfig) {
-	tryRequest(AuthorizedConfig{
-		Url:     config.Url,
+func tryAuthorizedPut(url string, config AuthorizedBodyConfig) {
+	tryRequest(url, "PUT", config.Body, AuthorizedConfig{
 		Token:   config.Token,
 		Handler: config.Handler,
-	}, "PUT", config.Body)
+	})
 }
 
-func tryAuthorizedDelete(config AuthorizedConfig) {
-	tryRequest(config, "DELETE", "")
+func tryAuthorizedDelete(url string, config AuthorizedConfig) {
+	tryRequest(url, "DELETE", "", config)
 }
 
-func tryAuthorizedGet(config AuthorizedConfig) {
-	tryRequest(config, "GET", "")
+func tryAuthorizedGet(url string, config AuthorizedConfig) {
+	tryRequest(url, "GET", "", config)
 }
