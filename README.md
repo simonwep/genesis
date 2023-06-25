@@ -5,6 +5,15 @@
   <h4>A generic json api for small, private frontend apps (WIP)</h4>
 </div>
 
+<div align="center">
+  <a href="https://goreportcard.com/report/github.com/simonwep/genisis">
+    <img src="https://goreportcard.com/badge/github.com/simonwep/genisis" alt="Go Report Card">
+  </a>
+  <a href="https://github.com/simonwep/genesis/actions/workflows/main.yml">
+    <img src="https://github.com/simonwep/genesis/actions/workflows/main.yml/badge.svg" alt="CI Status">
+  </a>
+</div>
+
 <br/>
 
 ### Summary
