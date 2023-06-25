@@ -12,7 +12,7 @@ func setup(t *testing.T) string {
 	core.DropDatabase()
 	var token string
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/register",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -21,7 +21,7 @@ func setup(t *testing.T) string {
 		},
 	})
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/login",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -37,7 +37,7 @@ func setup(t *testing.T) string {
 func TestGetAllData(t *testing.T) {
 	token := setup(t)
 
-	tryAuthorizedGet(AuthorizedGetConfig{
+	tryAuthorizedGet(AuthorizedConfig{
 		Url:   "/data",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -64,7 +64,7 @@ func TestGetAllData(t *testing.T) {
 		},
 	})
 
-	tryAuthorizedGet(AuthorizedGetConfig{
+	tryAuthorizedGet(AuthorizedConfig{
 		Url:   "/data",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -86,7 +86,7 @@ func TestSingleDataSet(t *testing.T) {
 		},
 	})
 
-	tryAuthorizedGet(AuthorizedGetConfig{
+	tryAuthorizedGet(AuthorizedConfig{
 		Url:   "/data/bar",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -108,7 +108,7 @@ func TestDeleteData(t *testing.T) {
 		},
 	})
 
-	tryAuthorizedGet(AuthorizedGetConfig{
+	tryAuthorizedGet(AuthorizedConfig{
 		Url:   "/data/bar",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -117,7 +117,7 @@ func TestDeleteData(t *testing.T) {
 		},
 	})
 
-	tryAuthorizedDelete(AuthorizedDeleteConfig{
+	tryAuthorizedDelete(AuthorizedConfig{
 		Url:   "/data/bar",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -125,7 +125,7 @@ func TestDeleteData(t *testing.T) {
 		},
 	})
 
-	tryAuthorizedGet(AuthorizedGetConfig{
+	tryAuthorizedGet(AuthorizedConfig{
 		Url:   "/data/bar",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {

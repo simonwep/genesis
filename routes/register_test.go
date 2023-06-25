@@ -11,7 +11,7 @@ import (
 func TestRegisterAndLogin(t *testing.T) {
 	core.DropDatabase()
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/register",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -20,7 +20,7 @@ func TestRegisterAndLogin(t *testing.T) {
 		},
 	})
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/login",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -29,7 +29,7 @@ func TestRegisterAndLogin(t *testing.T) {
 		},
 	})
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/login",
 		Body: "{\"user\": \"foo\", \"password\": \"test2\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -42,7 +42,7 @@ func TestRegisterAndLogin(t *testing.T) {
 func TestRegisterIncorrect(t *testing.T) {
 	core.DropDatabase()
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/register",
 		Body: "{\"user\": \"foo2\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -55,7 +55,7 @@ func TestRegisterIncorrect(t *testing.T) {
 func TestRegisterDuplicate(t *testing.T) {
 	core.DropDatabase()
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/register",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
@@ -64,7 +64,7 @@ func TestRegisterDuplicate(t *testing.T) {
 		},
 	})
 
-	tryUnauthorizedPost(UnauthorizedPostConfig{
+	tryUnauthorizedPost(UnauthorizedBodyConfig{
 		Url:  "/register",
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {

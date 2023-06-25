@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-type UnauthorizedPostConfig struct {
+type UnauthorizedBodyConfig struct {
 	Url     string
 	Body    string
 	Handler func(*httptest.ResponseRecorder)
 }
 
-type AuthorizedGetConfig struct {
+type AuthorizedConfig struct {
 	Url     string
 	Token   string
 	Handler func(*httptest.ResponseRecorder)
@@ -25,58 +25,39 @@ type AuthorizedBodyConfig struct {
 	Handler func(*httptest.ResponseRecorder)
 }
 
-type AuthorizedDeleteConfig struct {
-	Url     string
-	Token   string
-	Handler func(*httptest.ResponseRecorder)
-}
-
-func tryUnauthorizedPost(config UnauthorizedPostConfig) {
+func tryRequest(config AuthorizedConfig, method string, body string) {
 	router := SetupRoutes()
 
 	response := httptest.NewRecorder()
-	request, _ := http.NewRequest("POST", config.Url, strings.NewReader(config.Body))
+	request, _ := http.NewRequest(method, config.Url, strings.NewReader(body))
 
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+config.Token)
 
 	router.ServeHTTP(response, request)
 	config.Handler(response)
+}
+
+func tryUnauthorizedPost(config UnauthorizedBodyConfig) {
+	tryRequest(AuthorizedConfig{
+		Url:     config.Url,
+		Token:   "",
+		Handler: config.Handler,
+	}, "POST", config.Body)
 }
 
 func tryAuthorizedPut(config AuthorizedBodyConfig) {
-	router := SetupRoutes()
-
-	response := httptest.NewRecorder()
-	request, _ := http.NewRequest("PUT", config.Url, strings.NewReader(config.Body))
-
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+config.Token)
-
-	router.ServeHTTP(response, request)
-	config.Handler(response)
+	tryRequest(AuthorizedConfig{
+		Url:     config.Url,
+		Token:   config.Token,
+		Handler: config.Handler,
+	}, "PUT", config.Body)
 }
 
-func tryAuthorizedDelete(config AuthorizedDeleteConfig) {
-	router := SetupRoutes()
-
-	response := httptest.NewRecorder()
-	request, _ := http.NewRequest("DELETE", config.Url, nil)
-
-	request.Header.Set("Authorization", "Bearer "+config.Token)
-
-	router.ServeHTTP(response, request)
-	config.Handler(response)
+func tryAuthorizedDelete(config AuthorizedConfig) {
+	tryRequest(config, "DELETE", "")
 }
 
-func tryAuthorizedGet(config AuthorizedGetConfig) {
-	router := SetupRoutes()
-
-	response := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", config.Url, nil)
-
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+config.Token)
-
-	router.ServeHTTP(response, request)
-	config.Handler(response)
+func tryAuthorizedGet(config AuthorizedConfig) {
+	tryRequest(config, "GET", "")
 }
