@@ -28,6 +28,6 @@ func Register(c *gin.Context) {
 }
 
 func validateUserName(name string) bool {
-	users := core.Config().AppAllowedUsers
+	users := core.Config.AppAllowedUsers
 	return len(users) == 0 || slices.Contains(users, name)
 }

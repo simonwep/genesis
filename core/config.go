@@ -18,26 +18,24 @@ type AppConfig struct {
 	DbPath               string
 	JWTSecret            []byte
 	JWTExpires           time.Duration
+	AppPort              string
 	AppAllowedUsers      []string
 	AppAllowedKeyPattern *regexp.Regexp
 }
 
-var env AppConfig
-
-func Config() *AppConfig {
-	return &env
-}
+var Config AppConfig
 
 func init() {
 	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
 		Logger.Fatal("failed to retrieve data", zap.Error(err))
 	}
 
-	env = AppConfig{
+	Config = AppConfig{
 		GinMode:              os.Getenv("GIN_MODE"),
 		DbPath:               resolvePath(os.Getenv("DB_PATH")),
 		JWTSecret:            []byte(os.Getenv("JWT_SECRET")),
 		JWTExpires:           time.Duration(parseInt(os.Getenv("JWT_EXPIRES_IN"))) * time.Minute,
+		AppPort:              os.Getenv("APP_PORT"),
 		AppAllowedUsers:      strings.Split(os.Getenv("APP_ALLOWED_USERS"), ","),
 		AppAllowedKeyPattern: regexp.MustCompile(os.Getenv("APP_KEY_PATTERN")),
 	}

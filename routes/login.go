@@ -20,6 +20,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// quick path if username is invalid
+	if !validateUserName(body.User) {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+
 	user, err := core.AuthenticateUser(body.User, body.Password)
 	if user == nil || err != nil {
 		c.Status(http.StatusUnauthorized)

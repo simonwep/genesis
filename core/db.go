@@ -155,7 +155,7 @@ func DropDatabase() {
 }
 
 func init() {
-	options := badger.DefaultOptions(Config().DbPath)
+	options := badger.DefaultOptions(Config.DbPath)
 	options.Logger = nil
 
 	if db, err := badger.Open(options); err != nil {
