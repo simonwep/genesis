@@ -60,7 +60,7 @@ func SetData(c *gin.Context) {
 		c.Status(http.StatusForbidden)
 	} else if size, err := getContentLength(c); err != nil || size > core.Config.AppValueMaxSize {
 		c.Status(http.StatusRequestEntityTooLarge)
-	} else if err := c.BindJSON(&body); err != nil {
+	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.SetDataForUser(user.User, key, body); err != nil {
 		c.Status(http.StatusInternalServerError)

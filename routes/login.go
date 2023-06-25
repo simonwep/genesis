@@ -15,7 +15,7 @@ type LoginBody struct {
 func Login(c *gin.Context) {
 	var body LoginBody
 
-	if err := c.BindJSON(&body); err != nil {
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}

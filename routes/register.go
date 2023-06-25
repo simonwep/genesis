@@ -15,7 +15,7 @@ type APIError struct {
 func Register(c *gin.Context) {
 	var body LoginBody
 
-	if err := c.BindJSON(&body); err != nil {
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if !validateUserName(body.User) {
 		c.Status(http.StatusUnauthorized)
