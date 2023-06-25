@@ -4,6 +4,7 @@ on: push
 
 jobs:
   build:
+    name: Build and test
     runs-on: ubuntu-latest
     env:
       GOPATH: ${{ github.workspace }}
@@ -24,7 +25,7 @@ jobs:
         run: go mod download
 
       - name: Set up env
-        run: cp .env.example .env
+        run: cp .env.test .env
 
       - name: Build
         run: go build -v ./...
