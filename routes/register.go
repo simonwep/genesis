@@ -3,8 +3,8 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genisis/core"
+	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
-	"log"
 	"net/http"
 )
 
@@ -17,12 +17,11 @@ func Register(c *gin.Context) {
 
 	if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-		log.Printf("Received invalid body: %v", err)
 	} else if !validateUserName(body.User) {
 		c.Status(http.StatusUnauthorized)
 	} else if err := core.CreateUser(body.User, body.Password); err != nil {
 		c.Status(http.StatusUnauthorized)
-		log.Printf("Failed to create user: %v", err)
+		core.Logger.Error("failed to register user", zap.Error(err))
 	} else {
 		c.Status(http.StatusCreated)
 	}

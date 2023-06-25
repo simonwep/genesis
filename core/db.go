@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 )
 
 const (
@@ -149,16 +149,17 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 }
 
 func DropDatabase() {
-	if database.DropAll() != nil {
-		log.Fatal("Failed to drop database")
+	if err := database.DropAll(); err != nil {
+		Logger.Fatal("failed to drop database", zap.Error(err))
 	}
 }
 
 func init() {
 	options := badger.DefaultOptions(Config().DbPath)
+	options.Logger = nil
 
 	if db, err := badger.Open(options); err != nil {
-		log.Fatal(err)
+		Logger.Fatal("failed to open database", zap.Error(err))
 	} else {
 		database = db
 	}

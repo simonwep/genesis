@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/joho/godotenv"
-	"log"
+	"go.uber.org/zap"
 	"os"
 	"path"
 	"path/filepath"
@@ -30,7 +30,7 @@ func Config() *AppConfig {
 
 func init() {
 	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
-		log.Fatal("Failed to load .env file")
+		Logger.Fatal("failed to retrieve data", zap.Error(err))
 	}
 
 	env = AppConfig{

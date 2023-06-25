@@ -4,6 +4,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genisis/core"
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 )
@@ -15,6 +16,7 @@ func Data(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 	} else if data, err := core.GetAllDataFromUser(user.User); err != nil {
 		c.Status(http.StatusInternalServerError)
+		core.Logger.Error("failed to retrieve data", zap.Error(err))
 	} else {
 		c.Data(http.StatusOK, "application/json; charset=utf-8", data)
 	}
@@ -27,12 +29,14 @@ func DataByKey(c *gin.Context) {
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
 	} else if !core.Config().AppAllowedKeyPattern.MatchString(key) {
-		c.Status(http.StatusBadRequest)
+		c.Status(http.StatusNotFound)
 	} else if data, err := core.GetDataFromUser(user.User, key); err != nil {
 		if err == badger.ErrKeyNotFound {
 			c.Status(http.StatusNotFound)
 		} else {
 			c.Status(http.StatusInternalServerError)
+			core.Logger.Error("failed to retrieve unit of data", zap.Error(err))
+
 		}
 	} else {
 		c.Data(http.StatusOK, "application/json; charset=utf-8", data)
@@ -52,6 +56,7 @@ func SetData(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.SetDataForUser(user.User, key, body); err != nil {
 		c.Status(http.StatusInternalServerError)
+		core.Logger.Error("failed to set data", zap.Error(err))
 	} else {
 		c.Status(http.StatusOK)
 	}
@@ -65,6 +70,7 @@ func DeleteData(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 	} else if err := core.DeleteDataFromUser(user.User, key); err != nil {
 		c.Status(http.StatusInternalServerError)
+		core.Logger.Error("failed to delete data", zap.Error(err))
 	} else {
 		c.Status(http.StatusOK)
 	}

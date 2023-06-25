@@ -96,6 +96,28 @@ func TestSingleDataSet(t *testing.T) {
 	})
 }
 
+func TestInvalidKeys(t *testing.T) {
+	token := setup(t)
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/HsRLrSgCFylAK77aJmvRon0ubjXjzPFtd", // too long
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusBadRequest, response.Code)
+		},
+	})
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/🦧", // invalid characters
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusBadRequest, response.Code)
+		},
+	})
+}
+
 func TestDeleteData(t *testing.T) {
 	token := setup(t)
 

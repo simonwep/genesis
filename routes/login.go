@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genisis/core"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -28,6 +29,7 @@ func Login(c *gin.Context) {
 	tokenString, err := core.CreateAuthToken(user)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
+		core.Logger.Error("failed to create auth token", zap.Error(err))
 	} else {
 		c.Header("Authorization", "Bearer "+tokenString)
 		c.Status(http.StatusOK)
