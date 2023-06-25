@@ -79,7 +79,7 @@ func GetUser(name string) (*User, error) {
 	})
 }
 
-func SetDataForUser(name string, key string, data map[string]interface{}) error {
+func SetDataForUser(name string, key string, data interface{}) error {
 	txn := database.NewTransaction(true)
 
 	if data, err := json.Marshal(data); err != nil {
@@ -146,6 +146,31 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 	}
 
 	return json.Marshal(data)
+}
+
+func GetDataCountForUser(name, includedKey string) int64 {
+	txn := database.NewTransaction(false)
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer it.Close()
+
+	prefix := []byte(DbUserDataPrefix + name + ":")
+	hadIncludedKey := false
+	count := int64(0)
+
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		if !hadIncludedKey {
+			key := string(it.Item().Key())
+			hadIncludedKey = key == DbUserDataPrefix+name+":"+includedKey
+		}
+
+		count++
+	}
+
+	if !hadIncludedKey {
+		count++
+	}
+
+	return count
 }
 
 func DropDatabase() {

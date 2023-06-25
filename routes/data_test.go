@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -74,7 +75,7 @@ func TestGetAllData(t *testing.T) {
 	})
 }
 
-func TestSingleDataSet(t *testing.T) {
+func TestSingleObject(t *testing.T) {
 	token := setup(t)
 
 	tryAuthorizedPut(AuthorizedBodyConfig{
@@ -92,6 +93,28 @@ func TestSingleDataSet(t *testing.T) {
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 			assert.Equal(t, "{\"hello\":\"world!\"}", response.Body.String())
+		},
+	})
+}
+
+func TestSingleArray(t *testing.T) {
+	token := setup(t)
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar",
+		Body:  "[1, 2, 3, 4, 5, 6]",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedGet(AuthorizedConfig{
+		Url:   "/data/bar",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+			assert.Equal(t, "[1,2,3,4,5,6]", response.Body.String())
 		},
 	})
 }
@@ -152,6 +175,89 @@ func TestDeleteData(t *testing.T) {
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusNotFound, response.Code)
+		},
+	})
+}
+
+func TestTooBig(t *testing.T) {
+	token := setup(t)
+
+	body1 := strings.Repeat("{\"hello\": \"world!\"},", 10)
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar",
+		Body:  "[" + body1[:len(body1)-1] + "]",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	body2 := strings.Repeat("{\"hello\": \"world!\"},", 50)
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar",
+		Body:  "[" + body2[:len(body2)-1] + "]",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusRequestEntityTooLarge, response.Code)
+		},
+	})
+}
+
+func TestTooMany(t *testing.T) {
+	token := setup(t)
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar1",
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar2",
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar3",
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	// this one should fail
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar4",
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusForbidden, response.Code)
+		},
+	})
+
+	// make it succeed
+	tryAuthorizedDelete(AuthorizedConfig{
+		Url:   "/data/bar3",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedPut(AuthorizedBodyConfig{
+		Url:   "/data/bar4",
+		Body:  "{\"hello\": \"world!\"}",
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
 		},
 	})
 }

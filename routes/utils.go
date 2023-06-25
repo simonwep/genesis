@@ -3,6 +3,7 @@ package routes
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 )
 
@@ -32,6 +33,7 @@ func tryRequest(config AuthorizedConfig, method string, body string) {
 	request, _ := http.NewRequest(method, config.Url, strings.NewReader(body))
 
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Content-Length", strconv.FormatInt(int64(len(body)), 10))
 	request.Header.Set("Authorization", "Bearer "+config.Token)
 
 	router.ServeHTTP(response, request)

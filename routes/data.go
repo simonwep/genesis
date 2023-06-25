@@ -6,6 +6,7 @@ import (
 	"github.com/simonwep/genisis/core"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -44,14 +45,21 @@ func DataByKey(c *gin.Context) {
 }
 
 func SetData(c *gin.Context) {
-	var body map[string]interface{}
+	var body interface{}
 	key := c.Param("key")
 	user := getUser(c)
+
+	// Limit size
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, core.Config.AppValueMaxSize)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
 	} else if !core.Config.AppAllowedKeyPattern.MatchString(key) {
 		c.Status(http.StatusBadRequest)
+	} else if count := core.GetDataCountForUser(user.User, key); count > core.Config.AppKeysPerUser {
+		c.Status(http.StatusForbidden)
+	} else if size, err := getContentLength(c); err != nil || size > core.Config.AppValueMaxSize {
+		c.Status(http.StatusRequestEntityTooLarge)
 	} else if err := c.BindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.SetDataForUser(user.User, key, body); err != nil {
@@ -86,4 +94,8 @@ func getUser(c *gin.Context) *core.User {
 	} else {
 		return user
 	}
+}
+
+func getContentLength(c *gin.Context) (int64, error) {
+	return strconv.ParseInt(c.GetHeader("Content-Length"), 10, 64)
 }

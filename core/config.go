@@ -21,6 +21,8 @@ type AppConfig struct {
 	AppPort              string
 	AppAllowedUsers      []string
 	AppAllowedKeyPattern *regexp.Regexp
+	AppValueMaxSize      int64
+	AppKeysPerUser       int64
 }
 
 var Config AppConfig
@@ -38,11 +40,14 @@ func init() {
 		AppPort:              os.Getenv("APP_PORT"),
 		AppAllowedUsers:      strings.Split(os.Getenv("APP_ALLOWED_USERS"), ","),
 		AppAllowedKeyPattern: regexp.MustCompile(os.Getenv("APP_KEY_PATTERN")),
+		AppValueMaxSize:      parseInt(os.Getenv("APP_VALUE_MAX_SIZE")),
+		AppKeysPerUser:       parseInt(os.Getenv("APP_KEYS_PER_USER")),
 	}
 }
 
 func parseInt(str string) int64 {
-	if value, err := strconv.ParseInt(str, 10, 64); err != nil {
+	raw := strings.ReplaceAll(str, "_", "")
+	if value, err := strconv.ParseInt(raw, 10, 64); err != nil {
 		panic(err)
 	} else {
 		return value
