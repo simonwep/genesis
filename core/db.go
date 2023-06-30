@@ -70,7 +70,11 @@ func GetUser(name string) (*User, error) {
 
 	data, err := txn.Get(key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve data: %v", err)
+		if err == badger.ErrKeyNotFound {
+			return nil, nil
+		} else {
+			return nil, fmt.Errorf("failed to retrieve data: %v", err)
+		}
 	}
 
 	var user User

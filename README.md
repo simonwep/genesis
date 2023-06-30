@@ -37,12 +37,10 @@ The API is kept as simple as possible, there is nothing more than simple data-va
 It comes with the following endpoints (so far):
 
 
-* `POST /register` - Registers a user initially.
-  - Takes a `user` and `password` as json object.
-  - Returns `201` on success, `401` if the user already exists or is invalid.
 * `POST /login` - Authenticates a user via [JWT](https://jwt.io/).
   - Takes a `user` and `password` as json object.
   - Returns `200` on success including the token as header, `401` the password is invalid or the user is invalid.
+  - Returns `201` on success if the user didn't exist before, `401` if the user  is invalid.
 * `GET /data` - Retrieves all data from a user as object.
 * `GET /data/:key` - Retrieves the data stored for the given `key`.
 * `PUT /data/:key` - Stores / overrides the data for `key`.

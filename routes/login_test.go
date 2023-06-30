@@ -12,16 +12,35 @@ func TestInvalidLogin(t *testing.T) {
 	core.DropDatabase()
 
 	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
-		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
+		Body: "{\"user\": \"foo123\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusUnauthorized, response.Code)
 		},
 	})
 }
 
-func TestSuccessfulLogin(t *testing.T) {
+func TestCreation(t *testing.T) {
 	core.DropDatabase()
-	core.CreateUser("foo", "test")
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusCreated, response.Code)
+			assert.IsType(t, "", response.Header().Get("Authorization"))
+		},
+	})
+}
+
+func TestLogin(t *testing.T) {
+	core.DropDatabase()
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusCreated, response.Code)
+			assert.IsType(t, "", response.Header().Get("Authorization"))
+		},
+	})
 
 	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",

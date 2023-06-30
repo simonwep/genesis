@@ -13,18 +13,10 @@ func setup(t *testing.T) string {
 	core.DropDatabase()
 	var token string
 
-	tryUnauthorizedPost("/register", UnauthorizedBodyConfig{
-		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
-		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusCreated, response.Code)
-			assert.Equal(t, 0, response.Body.Len())
-		},
-	})
-
 	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
 		Body: "{\"user\": \"foo\", \"password\": \"test\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusOK, response.Code)
+			assert.Equal(t, http.StatusCreated, response.Code)
 			assert.Equal(t, 0, response.Body.Len())
 			token = response.Header().Get("Authorization")[7:]
 		},
@@ -85,7 +77,7 @@ func TestSingleObject(t *testing.T) {
 	token := setup(t)
 
 	tryAuthorizedPut("/data/bar", AuthorizedBodyConfig{
-		Body:  "{\"hello\": \"world!\"}",
+		Body:  "{\"hello\": 1e5}",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
@@ -96,7 +88,7 @@ func TestSingleObject(t *testing.T) {
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
-			assert.Equal(t, "{\"hello\":\"world!\"}", response.Body.String())
+			assert.Equal(t, "{\"hello\":100000}", response.Body.String())
 		},
 	})
 }
