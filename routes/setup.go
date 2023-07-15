@@ -17,11 +17,12 @@ func SetupRoutes() *gin.Engine {
 	// Middleware
 	router.Use(gin.Recovery())
 
-	// Auth endpoint
+	// Auth and account endpoints
 	router.POST("/login", Login)
+	router.POST("/account/update", Update)
 
 	// Data endpoints
-	router.PUT("/data/:key", middleware.LimitBodySize(core.Config.AppValueMaxSize), middleware.MinifyJson(), SetData)
+	router.POST("/data/:key", middleware.LimitBodySize(core.Config.AppValueMaxSize), middleware.MinifyJson(), SetData)
 	router.DELETE("/data/:key", DeleteData)
 	router.GET("/data/:key", DataByKey)
 	router.GET("/data", Data)

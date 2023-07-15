@@ -11,7 +11,7 @@ import (
 )
 
 func Data(c *gin.Context) {
-	user := getUser(c)
+	user := AuthenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -25,7 +25,7 @@ func Data(c *gin.Context) {
 
 func DataByKey(c *gin.Context) {
 	key := c.Param("key")
-	user := getUser(c)
+	user := AuthenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -37,7 +37,6 @@ func DataByKey(c *gin.Context) {
 		} else {
 			c.Status(http.StatusInternalServerError)
 			core.Logger.Error("failed to retrieve unit of data", zap.Error(err))
-
 		}
 	} else {
 		c.Data(http.StatusOK, "application/json; charset=utf-8", data)
@@ -46,7 +45,7 @@ func DataByKey(c *gin.Context) {
 
 func SetData(c *gin.Context) {
 	key := c.Param("key")
-	user := getUser(c)
+	user := AuthenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -68,7 +67,7 @@ func SetData(c *gin.Context) {
 
 func DeleteData(c *gin.Context) {
 	key := c.Param("key")
-	user := getUser(c)
+	user := AuthenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -80,7 +79,7 @@ func DeleteData(c *gin.Context) {
 	}
 }
 
-func getUser(c *gin.Context) *core.User {
+func AuthenticateUser(c *gin.Context) *core.User {
 	token := strings.Split(c.GetHeader("Authorization"), "Bearer ")[1]
 
 	if parsed, err := core.ParseAuthToken(token); err != nil {

@@ -57,7 +57,7 @@ func AuthenticateUser(name string, password string) (*User, error) {
 	user, err := GetUser(name)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse data: %v", err)
+		return nil, err
 	} else if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
 		return nil, errors.New("invalid password")
 	}
@@ -82,6 +82,39 @@ func GetUser(name string) (*User, error) {
 	return &user, data.Value(func(val []byte) error {
 		return json.Unmarshal(val, &user)
 	})
+}
+
+func SetPasswordForUser(name string, password string) error {
+	user, err := GetUser(name)
+
+	if err != nil {
+		return err
+	} else if user == nil {
+		return fmt.Errorf("no such user with name %v", name)
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %v", err)
+	}
+
+	txn := database.NewTransaction(true)
+	key := []byte(DbUserPrefix + name)
+
+	data, err := json.Marshal(User{
+		User:     name,
+		Password: string(hash),
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create user data: %v", err)
+	} else if err := txn.Set(key, data); err != nil {
+		return fmt.Errorf("failed to store user: %v", err)
+	} else if err := txn.Commit(); err != nil {
+		return fmt.Errorf("failed to commit data: %v", err)
+	}
+
+	return nil
 }
 
 func SetDataForUser(name string, key string, data []byte) error {
@@ -174,13 +207,32 @@ func GetDataCountForUser(name, includedKey string) int64 {
 	return count
 }
 
-func DropDatabase() {
+func ResetDatabase() {
 	if err := database.DropAll(); err != nil {
 		Logger.Fatal("failed to drop database", zap.Error(err))
+	}
+
+	initUsers()
+}
+
+func initUsers() {
+	for _, user := range Config.AppInitialUsers {
+		usr, err := GetUser(user.Name)
+
+		if err != nil {
+			Logger.Error("failed to check for user", zap.Error(err))
+		} else if usr == nil {
+			if err = CreateUser(user.Name, user.Password); err != nil {
+				Logger.Error("failed to create user", zap.Error(err))
+			} else {
+				Logger.Debug("created new user with name " + user.Name)
+			}
+		}
 	}
 }
 
 func init() {
+	// Create database
 	options := badger.DefaultOptions(Config.DbPath)
 	options.Logger = nil
 
@@ -189,4 +241,6 @@ func init() {
 	} else {
 		database = db
 	}
+
+	go initUsers()
 }

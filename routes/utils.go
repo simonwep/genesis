@@ -44,8 +44,8 @@ func tryUnauthorizedPost(url string, config UnauthorizedBodyConfig) {
 	})
 }
 
-func tryAuthorizedPut(url string, config AuthorizedBodyConfig) {
-	tryRequest(url, "PUT", config.Body, AuthorizedConfig{
+func tryAuthorizedPost(url string, config AuthorizedBodyConfig) {
+	tryRequest(url, "POST", config.Body, AuthorizedConfig{
 		Token:   config.Token,
 		Handler: config.Handler,
 	})
