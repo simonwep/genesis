@@ -14,9 +14,9 @@ import (
 
 const (
 	dbKeySeparator       = "/"
-	dbUserPrefix         = "usr"
+	dbUserPrefix         = "usr" // user:{name}
 	dbDataPrefix         = "dat"
-	dbExpiredTokenPrefix = "exp"
+	dbExpiredTokenPrefix = "exp" // data:{name}:{key}
 )
 
 var (
@@ -109,6 +109,31 @@ func UpdateUser(name string, user PartialUser) error {
 		return fmt.Errorf("failed to update user: %w", err)
 	} else if err := txn.Commit(); err != nil {
 		return fmt.Errorf("failed to commit data: %w", err)
+	}
+
+	return nil
+}
+
+func DeleteUser(name string) error {
+	txn := database.NewTransaction(true)
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+
+	// Delete data
+	prefix := []byte(DbUserDataPrefix + name + ":")
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		if err := txn.Delete(it.Item().Key()); err != nil {
+			it.Close()
+			return err
+		}
+	}
+
+	it.Close()
+
+	// Delete user
+	if err := txn.Delete([]byte(DbUserDataPrefix + name)); err != nil {
+		return err
+	} else if err := txn.Commit(); err != nil {
+		return err
 	}
 
 	return nil
