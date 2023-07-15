@@ -41,7 +41,7 @@ var Config = func() AppConfig {
 	}
 
 	if err := godotenv.Load(envFile); err != nil {
-		Logger.Info(".env file skipped")
+		Logger.Debug(".env file skipped")
 	}
 
 	config := AppConfig{
@@ -63,7 +63,7 @@ var Config = func() AppConfig {
 		AppKeysPerUser:     parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
 	}
 
-	Logger.Info("build info",
+	Logger.Debug("build info",
 		zap.String("version", config.AppBuildVersion),
 		zap.String("date", config.AppBuildDate),
 		zap.String("commit", config.AppBuildCommit),
