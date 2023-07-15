@@ -28,10 +28,11 @@ First, create a [.env](.env.example) and specify the usernames you want to have 
 You can specify the remaining values, but the defaults are good for medium-sized projects such as [ocular](https://github.com/Simonwep/ocular).
 
 Second, start the server via `go run .`. That's it.
-Head to the [api](#the-api) documentation to see how to use it.
+Head to the [api](#api) documentation to see how to use it.
 
+The `json` is pre-processed by the [minify](https://github.com/tdewolff/minify) package to minimize and validate it.
 
-### The API
+### API
 
 The API is kept as simple as possible, there is nothing more than simple data-validation, json storage and user authentication.
 It comes with the following endpoints (so far):

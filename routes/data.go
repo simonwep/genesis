@@ -45,12 +45,8 @@ func DataByKey(c *gin.Context) {
 }
 
 func SetData(c *gin.Context) {
-	var body interface{}
 	key := c.Param("key")
 	user := getUser(c)
-
-	// Limit size
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, core.Config.AppValueMaxSize)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -60,7 +56,7 @@ func SetData(c *gin.Context) {
 		c.Status(http.StatusForbidden)
 	} else if size, err := getContentLength(c); err != nil || size > core.Config.AppValueMaxSize {
 		c.Status(http.StatusRequestEntityTooLarge)
-	} else if err := c.ShouldBindJSON(&body); err != nil {
+	} else if body, err := c.GetRawData(); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.SetDataForUser(user.User, key, body); err != nil {
 		c.Status(http.StatusInternalServerError)

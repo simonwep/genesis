@@ -7,6 +7,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 const (
@@ -83,12 +84,10 @@ func GetUser(name string) (*User, error) {
 	})
 }
 
-func SetDataForUser(name string, key string, data interface{}) error {
+func SetDataForUser(name string, key string, data []byte) error {
 	txn := database.NewTransaction(true)
 
-	if data, err := json.Marshal(data); err != nil {
-		return err
-	} else if err := txn.Set([]byte(DbUserDataPrefix+name+":"+key), data); err != nil {
+	if err := txn.Set([]byte(DbUserDataPrefix+name+":"+key), data); err != nil {
 		return err
 	} else {
 		return txn.Commit()
@@ -126,19 +125,17 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 	defer it.Close()
 
 	prefix := []byte(DbUserDataPrefix + name + ":")
-	data := make(map[string]interface{}, 0)
+	data := make([]string, 0)
 
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 		item := it.Item()
 		key := item.Key()
 
 		err := item.Value(func(v []byte) error {
-			var raw map[string]interface{}
-
-			if err := json.Unmarshal(v, &raw); err != nil {
+			if rawKey, err := json.Marshal(string(key[len(prefix):])); err != nil {
 				return err
 			} else {
-				data[string(key[len(prefix):])] = raw
+				data = append(data, string(rawKey)+":"+string(v))
 			}
 
 			return nil
@@ -149,7 +146,7 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 		}
 	}
 
-	return json.Marshal(data)
+	return []byte("{" + strings.Join(data, ",") + "}"), nil
 }
 
 func GetDataCountForUser(name, includedKey string) int64 {

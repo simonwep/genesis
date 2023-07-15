@@ -88,7 +88,7 @@ func TestSingleObject(t *testing.T) {
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
-			assert.Equal(t, "{\"hello\":100000}", response.Body.String())
+			assert.Equal(t, "{\"hello\":1e5}", response.Body.String())
 		},
 	})
 }
