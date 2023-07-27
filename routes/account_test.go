@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"github.com/simonwep/genisis/core"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -16,7 +17,9 @@ func TestUpdatePassword(t *testing.T) {
 		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
-			token = response.Header().Get("Authorization")[7:]
+			data := LoginResponse{}
+			json.Unmarshal(response.Body.Bytes(), &data)
+			token = data.Token
 		},
 	})
 
@@ -47,7 +50,6 @@ func TestUpdatePassword(t *testing.T) {
 		Body: "{\"user\": \"foo\", \"password\": \"hg235ZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
-			token = response.Header().Get("Authorization")[7:]
 		},
 	})
 }

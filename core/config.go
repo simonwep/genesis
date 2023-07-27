@@ -45,7 +45,7 @@ func init() {
 		AppPort:              os.Getenv("APP_PORT"),
 		AppInitialUsers:      parseUserPasswordList(os.Getenv("APP_INITIAL_USERS")),
 		AppAllowedKeyPattern: regexp.MustCompile(os.Getenv("APP_KEY_PATTERN")),
-		AppValueMaxSize:      parseInt(os.Getenv("APP_VALUE_MAX_SIZE")),
+		AppValueMaxSize:      parseInt(os.Getenv("APP_VALUE_MAX_SIZE")) * 1000,
 		AppKeysPerUser:       parseInt(os.Getenv("APP_KEYS_PER_USER")),
 	}
 }

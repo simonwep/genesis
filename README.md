@@ -39,11 +39,12 @@ It comes with the following endpoints (so far):
 
 * `POST /login` - Authenticates a user via [JWT](https://jwt.io/).
   - Takes a `user` and `password` as json object.
-  - Returns `200` on success including the token as header, `401` the password is invalid or the user doesn't exist.
+  - Returns `200` on success and `{ expiresAt: number, token: string}` as body. `expiresAt` is in minutes.
+  - Returns `401` the password is invalid or the user doesn't exist.
 * `POST /account/update`
   - Takes a `newPassword` and `currentPassword` as json object.
   - Returns `200` if the password was successfully updated.
 * `GET /data` - Retrieves all data from a user as object.
-* `GET /data/:key` - Retrieves the data stored for the given `key`.
+* `GET /data/:key` - Retrieves the data stored for the given `key`. Returns `204` if there is no content.
 * `POST /data/:key` - Stores / overrides the data for `key`.
 * `DELETE /data/:key` - Removes the data for `key`, always returns `200`, even if `key` doesn't exist.

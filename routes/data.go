@@ -33,7 +33,7 @@ func DataByKey(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 	} else if data, err := core.GetDataFromUser(user.User, key); err != nil {
 		if err == badger.ErrKeyNotFound {
-			c.Status(http.StatusNotFound)
+			c.Status(http.StatusNoContent)
 		} else {
 			c.Status(http.StatusInternalServerError)
 			core.Logger.Error("failed to retrieve unit of data", zap.Error(err))

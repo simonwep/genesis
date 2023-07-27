@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"github.com/simonwep/genisis/core"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -17,7 +18,9 @@ func setup(t *testing.T) string {
 		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
-			token = response.Header().Get("Authorization")[7:]
+			data := LoginResponse{}
+			json.Unmarshal(response.Body.Bytes(), &data)
+			token = data.Token
 		},
 	})
 
@@ -98,7 +101,7 @@ func TestEmpty(t *testing.T) {
 	tryAuthorizedGet("/data/bar", AuthorizedConfig{
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusNotFound, response.Code)
+			assert.Equal(t, http.StatusNoContent, response.Code)
 		},
 	})
 }
@@ -172,7 +175,7 @@ func TestDeleteData(t *testing.T) {
 	tryAuthorizedGet("/data/bar", AuthorizedConfig{
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusNotFound, response.Code)
+			assert.Equal(t, http.StatusNoContent, response.Code)
 		},
 	})
 }

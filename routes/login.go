@@ -5,11 +5,17 @@ import (
 	"github.com/simonwep/genisis/core"
 	"go.uber.org/zap"
 	"net/http"
+	"time"
 )
 
 type LoginBody struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Token     string `json:"token"`
+	ExpiresAt int64  `json:"expiresAt"`
 }
 
 func Login(c *gin.Context) {
@@ -43,8 +49,10 @@ func Login(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to create auth token", zap.Error(err))
 	} else {
-		c.Header("Authorization", "Bearer "+tokenString)
-		c.Status(http.StatusOK)
+		c.JSON(http.StatusOK, LoginResponse{
+			Token:     tokenString,
+			ExpiresAt: time.Now().UnixMilli() + core.Config.JWTExpires.Milliseconds(),
+		})
 	}
 }
 
