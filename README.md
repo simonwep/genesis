@@ -32,6 +32,18 @@ Head to the [api](#api) documentation to see how to use it.
 
 The `json` is pre-processed by the [minify](https://github.com/tdewolff/minify) package to minimize and validate it.
 
+#### Using docker
+
+This API can also be deployed by using docker.
+For this you can build and run the container using the following command:
+
+```sh
+docker build -t genesis .
+docker run -p 8088:8080 -v "$(pwd)/.data:/app/.data" genesis
+```
+
+Genesis should then be accessible under port `8088`.
+
 ### API
 
 The API is kept as simple as possible, there is nothing more than simple data-validation, json-storage and user-authentication.
