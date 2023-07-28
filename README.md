@@ -39,8 +39,11 @@ It comes with the following endpoints (so far):
 
 * `POST /login` - Authenticates a user via [JWT](https://jwt.io/).
   - Takes a `user` and `password` as json object.
-  - Returns `200` on success and `{ expiresAt: number, token: string}` as body. `expiresAt` is in minutes.
+  - Returns `{ expiresAt: number, token: string}` as body (`expiresAt` is a unix timestamp) and a refresh-token in the form of a cookie.
   - Returns `401` the password is invalid or the user doesn't exist.
+* `GET /login/refresh` - Refreshes the access token and rotates the refresh token.
+  - Returns `200` on success and `{ expiresAt: number, token: string}` as body. It also returns a new refresh-token in the form of a cookie.
+  - Returns `401` if the refresh token is invalid / expired, or the user doesn't exist.
 * `POST /account/update`
   - Takes a `newPassword` and `currentPassword` as json object.
   - Returns `200` if the password was successfully updated.

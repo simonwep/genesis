@@ -10,15 +10,12 @@ type JWTClaim struct {
 	jwt.RegisteredClaims
 }
 
-func CreateAuthToken(user *User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaim{
-		User: user.User,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Config.JWTExpires)),
-		},
-	})
+func CreateAccessToken(user *User) (string, error) {
+	return createToken(user, time.Now().Add(Config.JWTAccessExpiration))
+}
 
-	return token.SignedString(Config.JWTSecret)
+func CreateRefreshToken(user *User) (string, error) {
+	return createToken(user, time.Now().Add(Config.JWTRefreshExpiration))
 }
 
 func ParseAuthToken(token string) (*JWTClaim, error) {
@@ -29,4 +26,15 @@ func ParseAuthToken(token string) (*JWTClaim, error) {
 	})
 
 	return &claims, err
+}
+
+func createToken(user *User, expires time.Time) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaim{
+		User: user.User,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expires),
+		},
+	})
+
+	return token.SignedString(Config.JWTSecret)
 }

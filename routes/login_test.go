@@ -26,7 +26,6 @@ func TestLogin(t *testing.T) {
 		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
-			assert.IsType(t, "", response.Header().Get("Authorization"))
 		},
 	})
 }

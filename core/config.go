@@ -22,7 +22,8 @@ type AppConfig struct {
 	GinMode              string
 	DbPath               string
 	JWTSecret            []byte
-	JWTExpires           time.Duration
+	JWTAccessExpiration  time.Duration
+	JWTRefreshExpiration time.Duration
 	AppPort              string
 	AppInitialUsers      []AppUser
 	AppAllowedKeyPattern *regexp.Regexp
@@ -41,7 +42,8 @@ func init() {
 		GinMode:              os.Getenv("GIN_MODE"),
 		DbPath:               resolvePath(os.Getenv("DB_PATH")),
 		JWTSecret:            []byte(os.Getenv("JWT_SECRET")),
-		JWTExpires:           time.Duration(parseInt(os.Getenv("JWT_EXPIRES_IN"))) * time.Minute,
+		JWTAccessExpiration:  time.Duration(parseInt(os.Getenv("JWT_ACCESS_TOKEN_EXPIRATION"))) * time.Minute,
+		JWTRefreshExpiration: time.Duration(parseInt(os.Getenv("JWT_REFRESH_TOKEN_EXPIRATION"))) * time.Minute,
 		AppPort:              os.Getenv("APP_PORT"),
 		AppInitialUsers:      parseUserPasswordList(os.Getenv("APP_INITIAL_USERS")),
 		AppAllowedKeyPattern: regexp.MustCompile(os.Getenv("APP_KEY_PATTERN")),

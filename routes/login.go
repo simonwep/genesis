@@ -18,6 +18,8 @@ type LoginResponse struct {
 	ExpiresAt int64  `json:"expiresAt"`
 }
 
+const refreshAccessCookieName = "genesis_refresh_token"
+
 func Login(c *gin.Context) {
 	var body LoginBody
 
@@ -44,14 +46,44 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := core.CreateAuthToken(user)
-	if err != nil {
+	issueTokens(c, user)
+}
+
+func Refresh(c *gin.Context) {
+	refreshToken, err := c.Cookie(refreshAccessCookieName)
+
+	if err != nil || len(refreshToken) == 0 {
+		c.Status(http.StatusUnauthorized)
+	} else if parsed, err := core.ParseAuthToken(refreshToken); err != nil {
+		c.Status(http.StatusUnauthorized)
+	} else if user, err := core.GetUser(parsed.User); err != nil {
+		c.Status(http.StatusUnauthorized)
+	} else {
+		issueTokens(c, user)
+	}
+}
+
+func issueTokens(c *gin.Context, user *core.User) {
+	if accessToken, err := core.CreateAccessToken(user); err != nil {
+		c.Status(http.StatusInternalServerError)
+		core.Logger.Error("failed to create auth token", zap.Error(err))
+	} else if refreshToken, err := core.CreateRefreshToken(user); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to create auth token", zap.Error(err))
 	} else {
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     refreshAccessCookieName,
+			Value:    refreshToken,
+			Path:     "/",
+			Expires:  time.Now().Add(core.Config.JWTRefreshExpiration),
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+
 		c.JSON(http.StatusOK, LoginResponse{
-			Token:     tokenString,
-			ExpiresAt: time.Now().UnixMilli() + core.Config.JWTExpires.Milliseconds(),
+			Token:     accessToken,
+			ExpiresAt: time.Now().UnixMilli() + core.Config.JWTAccessExpiration.Milliseconds(),
 		})
 	}
 }

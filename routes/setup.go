@@ -19,6 +19,7 @@ func SetupRoutes() *gin.Engine {
 
 	// Auth and account endpoints
 	router.POST("/login", Login)
+	router.POST("/login/refresh", Refresh)
 	router.POST("/account/update", Update)
 
 	// Data endpoints
