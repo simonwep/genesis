@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genisis/core"
 	"go.uber.org/zap"
@@ -49,15 +50,44 @@ func Login(c *gin.Context) {
 	issueTokens(c, user)
 }
 
+func Logout(c *gin.Context) {
+	refreshToken, err := c.Cookie(refreshAccessCookieName)
+
+	if err != nil || len(refreshToken) == 0 {
+		c.Status(http.StatusUnauthorized)
+	} else if parsed, err := core.ParseAuthToken(refreshToken); err != nil || parsed == nil {
+		c.Status(http.StatusUnauthorized)
+	} else if err := core.StoreInvalidatedToken(parsed.ID, parsed.ExpiresAt.Sub(time.Now())); err != nil {
+		c.Status(http.StatusInternalServerError)
+	} else {
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     refreshAccessCookieName,
+			Value:    "",
+			Path:     "/",
+			Expires:  time.Now(),
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		c.Status(http.StatusOK)
+	}
+}
+
 func Refresh(c *gin.Context) {
 	refreshToken, err := c.Cookie(refreshAccessCookieName)
 
 	if err != nil || len(refreshToken) == 0 {
 		c.Status(http.StatusUnauthorized)
-	} else if parsed, err := core.ParseAuthToken(refreshToken); err != nil {
+		fmt.Printf("fail 1 %v %v", err, refreshToken)
+	} else if parsed, err := core.ParseAuthToken(refreshToken); err != nil || parsed == nil {
 		c.Status(http.StatusUnauthorized)
+		fmt.Printf("fail 2 %v", err)
 	} else if user, err := core.GetUser(parsed.User); err != nil {
 		c.Status(http.StatusUnauthorized)
+		fmt.Printf("fail 3 %v", err)
+	} else if err := core.StoreInvalidatedToken(parsed.ID, parsed.ExpiresAt.Sub(time.Now())); err != nil {
+		c.Status(http.StatusInternalServerError)
 	} else {
 		issueTokens(c, user)
 	}

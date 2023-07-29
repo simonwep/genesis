@@ -35,7 +35,7 @@ func TestUpdatePassword(t *testing.T) {
 		Token: token,
 		Body:  "{\"currentPassword\": \"hgEiPCZP\",\"newPassword\": \"hg235ZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusUnauthorized, response.Code)
+			assert.Equal(t, http.StatusBadRequest, response.Code)
 		},
 	})
 

@@ -24,7 +24,7 @@ func Update(c *gin.Context) {
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if _, err := core.AuthenticateUser(user.User, body.CurrentPassword); err != nil {
-		c.Status(http.StatusUnauthorized)
+		c.Status(http.StatusBadRequest)
 	} else if err := core.SetPasswordForUser(user.User, body.NewPassword); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to update user password", zap.Error(err))

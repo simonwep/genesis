@@ -8,11 +8,13 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
+	"time"
 )
 
 const (
-	DbUserPrefix     = "user:"
-	DbUserDataPrefix = "data:"
+	DbUserPrefix         = "user:"
+	DbUserDataPrefix     = "data:"
+	DbExpiredTokenPrefix = "expired:"
 )
 
 var database *badger.DB
@@ -205,6 +207,24 @@ func GetDataCountForUser(name, includedKey string) int64 {
 	}
 
 	return count
+}
+
+func StoreInvalidatedToken(jti string, expiration time.Duration) error {
+	return database.Update(func(txn *badger.Txn) error {
+		key := []byte(DbExpiredTokenPrefix + ":" + jti)
+		return txn.SetEntry(badger.NewEntry(key, []byte{}).WithTTL(expiration))
+	})
+}
+
+func IsTokenBlacklisted(jti string) (bool, error) {
+	txn := database.NewTransaction(false)
+	item, err := txn.Get([]byte(DbExpiredTokenPrefix + ":" + jti))
+
+	if err == badger.ErrKeyNotFound {
+		return false, nil
+	} else {
+		return item != nil, err
+	}
 }
 
 func ResetDatabase() {

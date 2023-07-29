@@ -82,7 +82,7 @@ func DeleteData(c *gin.Context) {
 func AuthenticateUser(c *gin.Context) *core.User {
 	token := strings.Split(c.GetHeader("Authorization"), "Bearer ")[1]
 
-	if parsed, err := core.ParseAuthToken(token); err != nil {
+	if parsed, err := core.ParseAuthToken(token); err != nil || parsed == nil {
 		return nil
 	} else if user, err := core.GetUser(parsed.User); err != nil {
 		return nil

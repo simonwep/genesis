@@ -56,9 +56,10 @@ It comes with the following endpoints (so far):
 * `GET /login/refresh` - Refreshes the access token and rotates the refresh token.
   - Returns `200` on success and `{ expiresAt: number, token: string}` as body. It also returns a new refresh-token in the form of a cookie.
   - Returns `401` if the refresh token is invalid / expired, or the user doesn't exist.
+* `POST /logout` - Invalidates the current refresh token and logs out a user.
 * `POST /account/update`
   - Takes a `newPassword` and `currentPassword` as json object.
-  - Returns `200` if the password was successfully updated.
+  - Returns `200` if the password was successfully updated, otherwise `400`.
 * `GET /data` - Retrieves all data from a user as object.
 * `GET /data/:key` - Retrieves the data stored for the given `key`. Returns `204` if there is no content.
 * `POST /data/:key` - Stores / overrides the data for `key`.
