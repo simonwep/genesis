@@ -26,6 +26,8 @@ type User struct {
 
 func CreateUser(name string, password string) error {
 	txn := database.NewTransaction(true)
+	defer txn.Discard()
+
 	key := []byte(DbUserPrefix + name)
 
 	if item, err := txn.Get(key); item != nil {
@@ -69,6 +71,8 @@ func AuthenticateUser(name string, password string) (*User, error) {
 
 func GetUser(name string) (*User, error) {
 	txn := database.NewTransaction(false)
+	defer txn.Discard()
+
 	key := []byte(DbUserPrefix + name)
 
 	data, err := txn.Get(key)
@@ -101,6 +105,8 @@ func SetPasswordForUser(name string, password string) error {
 	}
 
 	txn := database.NewTransaction(true)
+	defer txn.Discard()
+
 	key := []byte(DbUserPrefix + name)
 
 	data, err := json.Marshal(User{
@@ -121,6 +127,7 @@ func SetPasswordForUser(name string, password string) error {
 
 func SetDataForUser(name string, key string, data []byte) error {
 	txn := database.NewTransaction(true)
+	defer txn.Discard()
 
 	if err := txn.Set([]byte(DbUserDataPrefix+name+":"+key), data); err != nil {
 		return err
@@ -131,6 +138,7 @@ func SetDataForUser(name string, key string, data []byte) error {
 
 func DeleteDataFromUser(name string, key string) error {
 	txn := database.NewTransaction(true)
+	defer txn.Discard()
 
 	if err := txn.Delete([]byte(DbUserDataPrefix + name + ":" + key)); err != nil {
 		return err
@@ -141,6 +149,8 @@ func DeleteDataFromUser(name string, key string) error {
 
 func GetDataFromUser(name string, key string) ([]byte, error) {
 	txn := database.NewTransaction(false)
+	defer txn.Discard()
+
 	item, err := txn.Get([]byte(DbUserDataPrefix + name + ":" + key))
 
 	if err != nil {
@@ -156,6 +166,8 @@ func GetDataFromUser(name string, key string) ([]byte, error) {
 
 func GetAllDataFromUser(name string) ([]byte, error) {
 	txn := database.NewTransaction(false)
+	defer txn.Discard()
+
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
 
@@ -186,6 +198,8 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 
 func GetDataCountForUser(name, includedKey string) int64 {
 	txn := database.NewTransaction(false)
+	defer txn.Discard()
+
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
 
@@ -218,6 +232,8 @@ func StoreInvalidatedToken(jti string, expiration time.Duration) error {
 
 func IsTokenBlacklisted(jti string) (bool, error) {
 	txn := database.NewTransaction(false)
+	defer txn.Discard()
+
 	item, err := txn.Get([]byte(DbExpiredTokenPrefix + ":" + jti))
 
 	if err == badger.ErrKeyNotFound {
@@ -229,38 +245,60 @@ func IsTokenBlacklisted(jti string) (bool, error) {
 
 func ResetDatabase() {
 	if err := database.DropAll(); err != nil {
-		Logger.Fatal("failed to drop database", zap.Error(err))
+		Fatal("failed to drop database", zap.Error(err))
 	}
 
-	initUsers()
+	initializeUsers()
 }
 
-func initUsers() {
+func initializeUsers() {
 	for _, user := range Config.AppInitialUsers {
 		usr, err := GetUser(user.Name)
 
 		if err != nil {
-			Logger.Error("failed to check for user", zap.Error(err))
+			Error("failed to check for user", zap.Error(err))
 		} else if usr == nil {
 			if err = CreateUser(user.Name, user.Password); err != nil {
-				Logger.Error("failed to create user", zap.Error(err))
+				Error("failed to create user", zap.Error(err))
 			} else {
-				Logger.Debug("created new user with name " + user.Name)
+				Debug("created new user", zap.String("name", user.Name))
 			}
 		}
 	}
 }
 
+func printDebugInformation() {
+	txn := database.NewTransaction(false)
+	defer txn.Discard()
+
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer it.Close()
+
+	results := make(map[string]int)
+	results[DbUserPrefix] = 0
+	results[DbUserDataPrefix] = 0
+	results[DbExpiredTokenPrefix] = 0
+
+	for it.Rewind(); it.Valid(); it.Next() {
+		key := strings.Split(string(it.Item().Key()), ":")
+		results[key[0]+":"]++
+	}
+
+	Debug("users", zap.Int("count", results[DbUserPrefix]))
+	Debug("datasets", zap.Int("count", results[DbUserDataPrefix]))
+	Debug("expired keys", zap.Int("count", results[DbExpiredTokenPrefix]))
+}
+
 func init() {
-	// Create database
 	options := badger.DefaultOptions(Config.DbPath)
 	options.Logger = nil
 
 	if db, err := badger.Open(options); err != nil {
-		Logger.Fatal("failed to open database", zap.Error(err))
+		Fatal("failed to open database", zap.Error(err))
 	} else {
 		database = db
 	}
 
-	go initUsers()
+	printDebugInformation()
+	initializeUsers()
 }

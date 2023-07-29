@@ -9,7 +9,7 @@ import (
 func SetupRoutes() *gin.Engine {
 
 	// Set mode
-	gin.SetMode(core.Config.GinMode)
+	gin.SetMode(core.Config.AppGinMode)
 
 	// Create router
 	router := gin.New()

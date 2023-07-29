@@ -17,7 +17,7 @@ func Data(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 	} else if data, err := core.GetAllDataFromUser(user.User); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to retrieve data", zap.Error(err))
+		core.Error("failed to retrieve data", zap.Error(err))
 	} else {
 		c.Data(http.StatusOK, "application/json; charset=utf-8", data)
 	}
@@ -36,7 +36,7 @@ func DataByKey(c *gin.Context) {
 			c.Status(http.StatusNoContent)
 		} else {
 			c.Status(http.StatusInternalServerError)
-			core.Logger.Error("failed to retrieve unit of data", zap.Error(err))
+			core.Error("failed to retrieve unit of data", zap.Error(err))
 		}
 	} else {
 		c.Data(http.StatusOK, "application/json; charset=utf-8", data)
@@ -59,7 +59,7 @@ func SetData(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.SetDataForUser(user.User, key, body); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to set data", zap.Error(err))
+		core.Error("failed to set data", zap.Error(err))
 	} else {
 		c.Status(http.StatusOK)
 	}
@@ -73,7 +73,7 @@ func DeleteData(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 	} else if err := core.DeleteDataFromUser(user.User, key); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to delete data", zap.Error(err))
+		core.Error("failed to delete data", zap.Error(err))
 	} else {
 		c.Status(http.StatusOK)
 	}

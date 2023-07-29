@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -19,11 +20,12 @@ type AppUser struct {
 }
 
 type AppConfig struct {
-	GinMode              string
 	DbPath               string
 	JWTSecret            []byte
 	JWTAccessExpiration  time.Duration
 	JWTRefreshExpiration time.Duration
+	AppGinMode           string
+	AppLogMode           string
 	AppPort              string
 	AppInitialUsers      []AppUser
 	AppAllowedKeyPattern *regexp.Regexp
@@ -31,26 +33,25 @@ type AppConfig struct {
 	AppKeysPerUser       int64
 }
 
-var Config AppConfig
-
-func init() {
+var Config = func() AppConfig {
 	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
-		Logger.Fatal("failed to retrieve data", zap.Error(err))
+		log.Fatal("failed to retrieve data", zap.Error(err))
 	}
 
-	Config = AppConfig{
-		GinMode:              os.Getenv("GIN_MODE"),
+	return AppConfig{
 		DbPath:               resolvePath(os.Getenv("DB_PATH")),
 		JWTSecret:            []byte(os.Getenv("JWT_SECRET")),
 		JWTAccessExpiration:  time.Duration(parseInt(os.Getenv("JWT_ACCESS_TOKEN_EXPIRATION"))) * time.Minute,
 		JWTRefreshExpiration: time.Duration(parseInt(os.Getenv("JWT_REFRESH_TOKEN_EXPIRATION"))) * time.Minute,
+		AppGinMode:           os.Getenv("APP_GIN_MODE"),
+		AppLogMode:           os.Getenv("APP_LOG_MODE"),
 		AppPort:              os.Getenv("APP_PORT"),
 		AppInitialUsers:      parseUserPasswordList(os.Getenv("APP_INITIAL_USERS")),
 		AppAllowedKeyPattern: regexp.MustCompile(os.Getenv("APP_KEY_PATTERN")),
 		AppValueMaxSize:      parseInt(os.Getenv("APP_VALUE_MAX_SIZE")) * 1000,
 		AppKeysPerUser:       parseInt(os.Getenv("APP_KEYS_PER_USER")),
 	}
-}
+}()
 
 func parseUserPasswordList(raw string) []AppUser {
 	list := make([]AppUser, 0)
@@ -63,7 +64,7 @@ func parseUserPasswordList(raw string) []AppUser {
 		user := strings.Split(item, ":")
 
 		if len(user) != 2 {
-			Logger.Fatal("invalid pattern for allowed users")
+			log.Fatal("invalid pattern for allowed users")
 		}
 
 		list = append(list, AppUser{

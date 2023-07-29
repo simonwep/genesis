@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genisis/core"
 	"go.uber.org/zap"
@@ -37,7 +36,7 @@ func Login(c *gin.Context) {
 
 	if _, err := core.GetUser(body.User); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to check for user", zap.Error(err))
+		core.Error("failed to check for user", zap.Error(err))
 		return
 	}
 
@@ -79,13 +78,10 @@ func Refresh(c *gin.Context) {
 
 	if err != nil || len(refreshToken) == 0 {
 		c.Status(http.StatusUnauthorized)
-		fmt.Printf("fail 1 %v %v", err, refreshToken)
 	} else if parsed, err := core.ParseAuthToken(refreshToken); err != nil || parsed == nil {
 		c.Status(http.StatusUnauthorized)
-		fmt.Printf("fail 2 %v", err)
 	} else if user, err := core.GetUser(parsed.User); err != nil {
 		c.Status(http.StatusUnauthorized)
-		fmt.Printf("fail 3 %v", err)
 	} else if err := core.StoreInvalidatedToken(parsed.ID, parsed.ExpiresAt.Sub(time.Now())); err != nil {
 		c.Status(http.StatusInternalServerError)
 	} else {
@@ -96,10 +92,10 @@ func Refresh(c *gin.Context) {
 func issueTokens(c *gin.Context, user *core.User) {
 	if accessToken, err := core.CreateAccessToken(user); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to create auth token", zap.Error(err))
+		core.Error("failed to create auth token", zap.Error(err))
 	} else if refreshToken, err := core.CreateRefreshToken(user); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to create auth token", zap.Error(err))
+		core.Error("failed to create auth token", zap.Error(err))
 	} else {
 		http.SetCookie(c.Writer, &http.Cookie{
 			Name:     refreshAccessCookieName,
