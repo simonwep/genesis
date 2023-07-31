@@ -29,7 +29,7 @@ func DataByKey(c *gin.Context) {
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
-	} else if !core.Config.AppAllowedKeyPattern.MatchString(key) {
+	} else if !core.Config.AppKeyPattern.MatchString(key) {
 		c.Status(http.StatusNotFound)
 	} else if data, err := core.GetDataFromUser(user.User, key); err != nil {
 		if err == badger.ErrKeyNotFound {
@@ -49,11 +49,11 @@ func SetData(c *gin.Context) {
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
-	} else if !core.Config.AppAllowedKeyPattern.MatchString(key) {
+	} else if !core.Config.AppKeyPattern.MatchString(key) {
 		c.Status(http.StatusBadRequest)
 	} else if count := core.GetDataCountForUser(user.User, key); count > core.Config.AppKeysPerUser {
 		c.Status(http.StatusForbidden)
-	} else if size, err := getContentLength(c); err != nil || size > core.Config.AppValueMaxSize {
+	} else if size, err := getContentLength(c); err != nil || size > core.Config.AppDataMaxSize {
 		c.Status(http.StatusRequestEntityTooLarge)
 	} else if body, err := c.GetRawData(); err != nil {
 		c.Status(http.StatusBadRequest)

@@ -252,7 +252,7 @@ func ResetDatabase() {
 }
 
 func initializeUsers() {
-	for _, user := range Config.AppInitialUsers {
+	for _, user := range Config.AppUsersToCreate {
 		usr, err := GetUser(user.Name)
 
 		if err != nil {

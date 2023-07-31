@@ -27,9 +27,9 @@ type AppConfig struct {
 	AppGinMode           string
 	AppLogMode           string
 	AppPort              string
-	AppInitialUsers      []AppUser
-	AppAllowedKeyPattern *regexp.Regexp
-	AppValueMaxSize      int64
+	AppUsersToCreate     []AppUser
+	AppKeyPattern        *regexp.Regexp
+	AppDataMaxSize       int64
 	AppKeysPerUser       int64
 }
 
@@ -39,17 +39,17 @@ var Config = func() AppConfig {
 	}
 
 	return AppConfig{
-		DbPath:               resolvePath(os.Getenv("DB_PATH")),
-		JWTSecret:            []byte(os.Getenv("JWT_SECRET")),
-		JWTAccessExpiration:  time.Duration(parseInt(os.Getenv("JWT_ACCESS_TOKEN_EXPIRATION"))) * time.Minute,
-		JWTRefreshExpiration: time.Duration(parseInt(os.Getenv("JWT_REFRESH_TOKEN_EXPIRATION"))) * time.Minute,
-		AppGinMode:           os.Getenv("APP_GIN_MODE"),
-		AppLogMode:           os.Getenv("APP_LOG_MODE"),
-		AppPort:              os.Getenv("APP_PORT"),
-		AppInitialUsers:      parseUserPasswordList(os.Getenv("APP_INITIAL_USERS")),
-		AppAllowedKeyPattern: regexp.MustCompile(os.Getenv("APP_KEY_PATTERN")),
-		AppValueMaxSize:      parseInt(os.Getenv("APP_VALUE_MAX_SIZE")) * 1000,
-		AppKeysPerUser:       parseInt(os.Getenv("APP_KEYS_PER_USER")),
+		DbPath:               resolvePath(os.Getenv("GENESIS_DB_PATH")),
+		JWTSecret:            []byte(os.Getenv("GENESIS_JWT_SECRET")),
+		JWTAccessExpiration:  time.Duration(parseInt(os.Getenv("GENESIS_JWT_ACCESS_TOKEN_EXPIRATION"))) * time.Minute,
+		JWTRefreshExpiration: time.Duration(parseInt(os.Getenv("GENESIS_JWT_REFRESH_TOKEN_EXPIRATION"))) * time.Minute,
+		AppGinMode:           os.Getenv("GENESIS_GIN_MODE"),
+		AppLogMode:           os.Getenv("GENESIS_LOG_MODE"),
+		AppPort:              os.Getenv("GENESIS_PORT"),
+		AppUsersToCreate:     parseUserPasswordList(os.Getenv("GENESIS_CREATE_USERS")),
+		AppKeyPattern:        regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
+		AppDataMaxSize:       parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
+		AppKeysPerUser:       parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
 	}
 }()
 

@@ -115,7 +115,7 @@ func issueTokens(c *gin.Context, user *core.User) {
 }
 
 func validateUserName(name string) bool {
-	users := core.Config.AppInitialUsers
+	users := core.Config.AppUsersToCreate
 
 	for _, user := range users {
 		if user.Name == name {
