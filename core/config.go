@@ -3,7 +3,6 @@ package core
 import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -35,7 +34,7 @@ type AppConfig struct {
 
 var Config = func() AppConfig {
 	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
-		log.Fatal("failed to retrieve data", zap.Error(err))
+		Warn("failed to retrieve data", zap.Error(err))
 	}
 
 	return AppConfig{
@@ -64,13 +63,13 @@ func parseUserPasswordList(raw string) []AppUser {
 		user := strings.Split(item, ":")
 
 		if len(user) != 2 {
-			log.Fatal("invalid pattern for allowed users")
+			Error("invalid pattern for allowed users")
+		} else {
+			list = append(list, AppUser{
+				Name:     user[0],
+				Password: user[1],
+			})
 		}
-
-		list = append(list, AppUser{
-			Name:     user[0],
-			Password: user[1],
-		})
 	}
 
 	return list
