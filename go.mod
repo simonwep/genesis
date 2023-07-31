@@ -1,4 +1,4 @@
-module github.com/simonwep/genisis
+module github.com/simonwep/genesis
 
 go 1.20
 

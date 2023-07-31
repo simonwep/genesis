@@ -1,15 +1,18 @@
 package core
 
 import (
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"log"
+	"os"
 )
 
 var logger = func() *zap.Logger {
 	var logger *zap.Logger
 	var err error
 
-	if Config.AppLogMode == "development" {
+	godotenv.Load()
+	if os.Getenv("GENESIS_LOG_MODE") == "development" {
 		logger, err = zap.NewDevelopmentConfig().Build(
 			zap.AddCallerSkip(1),
 			zap.IncreaseLevel(zap.DebugLevel),
@@ -24,10 +27,6 @@ var logger = func() *zap.Logger {
 
 	return logger
 }()
-
-func GetLogger() *zap.Logger {
-	return logger
-}
 
 func Debug(message string, fields ...zap.Field) {
 	logger.Debug(message, fields...)

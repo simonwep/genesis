@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/dgraph-io/badger/v4"
 	"github.com/gin-gonic/gin"
-	"github.com/simonwep/genisis/core"
+	"github.com/simonwep/genesis/core"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"

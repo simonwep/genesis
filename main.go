@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/simonwep/genisis/core"
-	"github.com/simonwep/genisis/routes"
+	"github.com/simonwep/genesis/core"
+	"github.com/simonwep/genesis/routes"
 )
 
 func main() {

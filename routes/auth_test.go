@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/simonwep/genisis/core"
+	"github.com/simonwep/genesis/core"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"

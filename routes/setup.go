@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/simonwep/genisis/core"
-	"github.com/simonwep/genisis/middleware"
+	"github.com/simonwep/genesis/core"
+	"github.com/simonwep/genesis/middleware"
 )
 
 func SetupRoutes() *gin.Engine {

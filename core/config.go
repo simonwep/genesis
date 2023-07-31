@@ -63,7 +63,7 @@ func parseUserPasswordList(raw string) []AppUser {
 		user := strings.Split(item, ":")
 
 		if len(user) != 2 {
-			Error("invalid pattern for allowed users")
+			Warn("invalid pattern for allowed users", zap.String("user", item))
 		} else {
 			list = append(list, AppUser{
 				Name:     user[0],
