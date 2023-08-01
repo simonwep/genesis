@@ -39,7 +39,7 @@ For this you can build and run the container using the following command:
 
 ```sh
 docker build -t genesis .
-docker run -p 8088:8080 -v "$(pwd)/.data:/app/.data" genesis
+docker run -p 8088:8080 -v "$(pwd)/.data:/app/.data" --env-file .env genesis
 ```
 
 Genesis should then be accessible under port `8088`.
