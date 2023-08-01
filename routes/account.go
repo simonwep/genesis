@@ -27,7 +27,7 @@ func Update(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.SetPasswordForUser(user.User, body.NewPassword); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Error("failed to update user password", zap.Error(err))
+		core.Logger.Error("failed to update user password", zap.Error(err))
 	} else {
 		c.Status(http.StatusOK)
 	}

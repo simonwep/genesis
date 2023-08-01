@@ -245,7 +245,7 @@ func IsTokenBlacklisted(jti string) (bool, error) {
 
 func ResetDatabase() {
 	if err := database.DropAll(); err != nil {
-		Fatal("failed to drop database", zap.Error(err))
+		Logger.Fatal("failed to drop database", zap.Error(err))
 	}
 
 	initializeUsers()
@@ -256,12 +256,12 @@ func initializeUsers() {
 		usr, err := GetUser(user.Name)
 
 		if err != nil {
-			Error("failed to check for user", zap.Error(err))
+			Logger.Error("failed to check for user", zap.Error(err))
 		} else if usr == nil {
 			if err = CreateUser(user.Name, user.Password); err != nil {
-				Error("failed to create user", zap.Error(err))
+				Logger.Error("failed to create user", zap.Error(err))
 			} else {
-				Debug("created new user", zap.String("name", user.Name))
+				Logger.Debug("created new user", zap.String("name", user.Name))
 			}
 		}
 	}
@@ -284,9 +284,9 @@ func printDebugInformation() {
 		results[key[0]+":"]++
 	}
 
-	Debug("users", zap.Int("count", results[DbUserPrefix]))
-	Debug("datasets", zap.Int("count", results[DbUserDataPrefix]))
-	Debug("expired keys", zap.Int("count", results[DbExpiredTokenPrefix]))
+	Logger.Debug("users", zap.Int("count", results[DbUserPrefix]))
+	Logger.Debug("datasets", zap.Int("count", results[DbUserDataPrefix]))
+	Logger.Debug("expired keys", zap.Int("count", results[DbExpiredTokenPrefix]))
 }
 
 func init() {
@@ -294,7 +294,7 @@ func init() {
 	options.Logger = nil
 
 	if db, err := badger.Open(options); err != nil {
-		Fatal("failed to open database", zap.Error(err))
+		Logger.Fatal("failed to open database", zap.Error(err))
 	} else {
 		database = db
 	}

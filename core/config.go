@@ -34,7 +34,7 @@ type AppConfig struct {
 
 var Config = func() AppConfig {
 	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
-		Warn("failed to retrieve data", zap.Error(err))
+		Logger.Warn("failed to retrieve data", zap.Error(err))
 	}
 
 	return AppConfig{
@@ -52,6 +52,10 @@ var Config = func() AppConfig {
 	}
 }()
 
+func loadEnvFile() error {
+	return godotenv.Load(path.Join(currentDir(), ".env"))
+}
+
 func parseUserPasswordList(raw string) []AppUser {
 	list := make([]AppUser, 0)
 
@@ -63,7 +67,7 @@ func parseUserPasswordList(raw string) []AppUser {
 		user := strings.Split(item, ":")
 
 		if len(user) != 2 {
-			Warn("invalid pattern for allowed users", zap.String("user", item))
+			Logger.Warn("invalid pattern for allowed users", zap.String("user", item))
 		} else {
 			list = append(list, AppUser{
 				Name:     user[0],

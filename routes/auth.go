@@ -36,7 +36,7 @@ func Login(c *gin.Context) {
 
 	if _, err := core.GetUser(body.User); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Error("failed to check for user", zap.Error(err))
+		core.Logger.Error("failed to check for user", zap.Error(err))
 		return
 	}
 
@@ -92,10 +92,10 @@ func Refresh(c *gin.Context) {
 func issueTokens(c *gin.Context, user *core.User) {
 	if accessToken, err := core.CreateAccessToken(user); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Error("failed to create auth token", zap.Error(err))
+		core.Logger.Error("failed to create auth token", zap.Error(err))
 	} else if refreshToken, err := core.CreateRefreshToken(user); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Error("failed to create auth token", zap.Error(err))
+		core.Logger.Error("failed to create auth token", zap.Error(err))
 	} else {
 		http.SetCookie(c.Writer, &http.Cookie{
 			Name:     refreshAccessCookieName,
