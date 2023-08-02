@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	DbUserPrefix         = "user:"
-	DbUserDataPrefix     = "data:"
-	DbExpiredTokenPrefix = "expired:"
+	dbKeySeparator      = "/"
+	dbUserPrefix        = "usr"
+	dbDataPrefix        = "dta"
+	dbExpireTokenPrefix = "exp"
 )
 
 var database *badger.DB
@@ -26,9 +27,8 @@ type User struct {
 
 func CreateUser(name string, password string) error {
 	txn := database.NewTransaction(true)
+	key := buildUserKey(name)
 	defer txn.Discard()
-
-	key := []byte(DbUserPrefix + name)
 
 	if item, err := txn.Get(key); item != nil {
 		return fmt.Errorf("a user with the name %v already exists", name)
@@ -71,13 +71,12 @@ func AuthenticateUser(name string, password string) (*User, error) {
 
 func GetUser(name string) (*User, error) {
 	txn := database.NewTransaction(false)
+	key := buildUserKey(name)
 	defer txn.Discard()
-
-	key := []byte(DbUserPrefix + name)
 
 	data, err := txn.Get(key)
 	if err != nil {
-		if err == badger.ErrKeyNotFound {
+		if errors.Is(err, badger.ErrKeyNotFound) {
 			return nil, nil
 		} else {
 			return nil, fmt.Errorf("failed to retrieve data: %v", err)
@@ -107,8 +106,6 @@ func SetPasswordForUser(name string, password string) error {
 	txn := database.NewTransaction(true)
 	defer txn.Discard()
 
-	key := []byte(DbUserPrefix + name)
-
 	data, err := json.Marshal(User{
 		User:     name,
 		Password: string(hash),
@@ -116,7 +113,7 @@ func SetPasswordForUser(name string, password string) error {
 
 	if err != nil {
 		return fmt.Errorf("failed to create user data: %v", err)
-	} else if err := txn.Set(key, data); err != nil {
+	} else if err := txn.Set(buildUserKey(name), data); err != nil {
 		return fmt.Errorf("failed to store user: %v", err)
 	} else if err := txn.Commit(); err != nil {
 		return fmt.Errorf("failed to commit data: %v", err)
@@ -129,7 +126,7 @@ func SetDataForUser(name string, key string, data []byte) error {
 	txn := database.NewTransaction(true)
 	defer txn.Discard()
 
-	if err := txn.Set([]byte(DbUserDataPrefix+name+":"+key), data); err != nil {
+	if err := txn.Set(buildUserDataKey(name, key), data); err != nil {
 		return err
 	} else {
 		return txn.Commit()
@@ -140,7 +137,7 @@ func DeleteDataFromUser(name string, key string) error {
 	txn := database.NewTransaction(true)
 	defer txn.Discard()
 
-	if err := txn.Delete([]byte(DbUserDataPrefix + name + ":" + key)); err != nil {
+	if err := txn.Delete(buildUserDataKey(name, key)); err != nil {
 		return err
 	} else {
 		return txn.Commit()
@@ -151,8 +148,7 @@ func GetDataFromUser(name string, key string) ([]byte, error) {
 	txn := database.NewTransaction(false)
 	defer txn.Discard()
 
-	item, err := txn.Get([]byte(DbUserDataPrefix + name + ":" + key))
-
+	item, err := txn.Get(buildUserDataKey(name, key))
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +167,7 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
 
-	prefix := []byte(DbUserDataPrefix + name + ":")
+	prefix := buildUserDataKey(name, "")
 	data := make([]string, 0)
 
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
@@ -203,14 +199,14 @@ func GetDataCountForUser(name, includedKey string) int64 {
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
 
-	prefix := []byte(DbUserDataPrefix + name + ":")
+	prefix := buildUserDataKey(name, "")
 	hadIncludedKey := false
 	count := int64(0)
 
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 		if !hadIncludedKey {
 			key := string(it.Item().Key())
-			hadIncludedKey = key == DbUserDataPrefix+name+":"+includedKey
+			hadIncludedKey = key == string(buildUserDataKey(name, includedKey))
 		}
 
 		count++
@@ -225,8 +221,7 @@ func GetDataCountForUser(name, includedKey string) int64 {
 
 func StoreInvalidatedToken(jti string, expiration time.Duration) error {
 	return database.Update(func(txn *badger.Txn) error {
-		key := []byte(DbExpiredTokenPrefix + ":" + jti)
-		return txn.SetEntry(badger.NewEntry(key, []byte{}).WithTTL(expiration))
+		return txn.SetEntry(badger.NewEntry(buildExpiredKey(jti), []byte{}).WithTTL(expiration))
 	})
 }
 
@@ -234,9 +229,9 @@ func IsTokenBlacklisted(jti string) (bool, error) {
 	txn := database.NewTransaction(false)
 	defer txn.Discard()
 
-	item, err := txn.Get([]byte(DbExpiredTokenPrefix + ":" + jti))
+	item, err := txn.Get(buildExpiredKey(jti))
 
-	if err == badger.ErrKeyNotFound {
+	if errors.Is(err, badger.ErrKeyNotFound) {
 		return false, nil
 	} else {
 		return item != nil, err
@@ -275,18 +270,30 @@ func printDebugInformation() {
 	defer it.Close()
 
 	results := make(map[string]int)
-	results[DbUserPrefix] = 0
-	results[DbUserDataPrefix] = 0
-	results[DbExpiredTokenPrefix] = 0
+	results[dbUserPrefix] = 0
+	results[dbDataPrefix] = 0
+	results[dbExpireTokenPrefix] = 0
 
 	for it.Rewind(); it.Valid(); it.Next() {
-		key := strings.Split(string(it.Item().Key()), ":")
-		results[key[0]+":"]++
+		key := strings.Split(string(it.Item().Key()), dbKeySeparator)
+		results[key[0]]++
 	}
 
-	Logger.Debug("users", zap.Int("count", results[DbUserPrefix]))
-	Logger.Debug("datasets", zap.Int("count", results[DbUserDataPrefix]))
-	Logger.Debug("expired keys", zap.Int("count", results[DbExpiredTokenPrefix]))
+	Logger.Debug("users", zap.Int("count", results[dbUserPrefix]))
+	Logger.Debug("datasets", zap.Int("count", results[dbDataPrefix]))
+	Logger.Debug("expired keys", zap.Int("count", results[dbExpireTokenPrefix]))
+}
+
+func buildExpiredKey(key string) []byte {
+	return []byte(dbExpireTokenPrefix + dbKeySeparator + key)
+}
+
+func buildUserKey(name string) []byte {
+	return []byte(dbUserPrefix + dbKeySeparator + name)
+}
+
+func buildUserDataKey(name, key string) []byte {
+	return []byte(dbDataPrefix + dbKeySeparator + name + dbKeySeparator + key)
 }
 
 func init() {
@@ -299,6 +306,6 @@ func init() {
 		database = db
 	}
 
-	printDebugInformation()
 	initializeUsers()
+	printDebugInformation()
 }

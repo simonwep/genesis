@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genesis/core"
@@ -32,7 +33,7 @@ func DataByKey(c *gin.Context) {
 	} else if !core.Config.AppKeyPattern.MatchString(key) {
 		c.Status(http.StatusNotFound)
 	} else if data, err := core.GetDataFromUser(user.User, key); err != nil {
-		if err == badger.ErrKeyNotFound {
+		if errors.Is(err, badger.ErrKeyNotFound) {
 			c.Status(http.StatusNoContent)
 		} else {
 			c.Status(http.StatusInternalServerError)
