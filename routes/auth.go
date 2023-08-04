@@ -28,12 +28,6 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// quick path if username is invalid
-	if !validateUserName(body.User) {
-		c.Status(http.StatusUnauthorized)
-		return
-	}
-
 	if _, err := core.GetUser(body.User); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to check for user", zap.Error(err))
@@ -112,16 +106,4 @@ func issueTokens(c *gin.Context, user *core.User) {
 			ExpiresAt: time.Now().UnixMilli() + core.Config.JWTAccessExpiration.Milliseconds(),
 		})
 	}
-}
-
-func validateUserName(name string) bool {
-	users := core.Config.AppUsersToCreate
-
-	for _, user := range users {
-		if user.Name == name {
-			return true
-		}
-	}
-
-	return false
 }

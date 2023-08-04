@@ -18,21 +18,22 @@ const (
 	dbExpireTokenPrefix = "exp"
 )
 
-var database *badger.DB
-
 type User struct {
-	User     string `json:"user"`     // Username
-	Password string `json:"password"` // Hashed password
+	User     string `json:"user"`
+	Admin    bool   `json:"admin"`
+	Password string `json:"password"`
 }
 
-func CreateUser(name string, password string) error {
+var database *badger.DB
+
+func CreateUser(name string, password string, admin bool) error {
 	txn := database.NewTransaction(true)
 	key := buildUserKey(name)
 	defer txn.Discard()
 
 	if item, err := txn.Get(key); item != nil {
 		return fmt.Errorf("a user with the name %v already exists", name)
-	} else if err != nil && err != badger.ErrKeyNotFound {
+	} else if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
 		return fmt.Errorf("failed to check if user already exists")
 	}
 
@@ -43,6 +44,7 @@ func CreateUser(name string, password string) error {
 
 	data, err := json.Marshal(User{
 		User:     name,
+		Admin:    admin,
 		Password: string(hash),
 	})
 
@@ -62,6 +64,8 @@ func AuthenticateUser(name string, password string) (*User, error) {
 
 	if err != nil {
 		return nil, err
+	} else if user == nil {
+		return nil, nil
 	} else if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
 		return nil, errors.New("invalid password")
 	}
@@ -248,15 +252,15 @@ func ResetDatabase() {
 
 func initializeUsers() {
 	for _, user := range Config.AppUsersToCreate {
-		usr, err := GetUser(user.Name)
+		usr, err := GetUser(user.User)
 
 		if err != nil {
 			Logger.Error("failed to check for user", zap.Error(err))
 		} else if usr == nil {
-			if err = CreateUser(user.Name, user.Password); err != nil {
+			if err = CreateUser(user.User, user.Password, user.Admin); err != nil {
 				Logger.Error("failed to create user", zap.Error(err))
 			} else {
-				Logger.Debug("created new user", zap.String("name", user.Name))
+				Logger.Info("created new user", zap.String("name", user.User), zap.Bool("admin", user.Admin))
 			}
 		}
 	}
@@ -279,9 +283,9 @@ func printDebugInformation() {
 		results[key[0]]++
 	}
 
-	Logger.Debug("users", zap.Int("count", results[dbUserPrefix]))
-	Logger.Debug("datasets", zap.Int("count", results[dbDataPrefix]))
-	Logger.Debug("expired keys", zap.Int("count", results[dbExpireTokenPrefix]))
+	Logger.Info("users", zap.Int("count", results[dbUserPrefix]))
+	Logger.Info("datasets", zap.Int("count", results[dbDataPrefix]))
+	Logger.Info("expired keys", zap.Int("count", results[dbExpireTokenPrefix]))
 }
 
 func buildExpiredKey(key string) []byte {

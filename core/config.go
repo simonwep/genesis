@@ -13,11 +13,6 @@ import (
 	"time"
 )
 
-type AppUser struct {
-	Name     string
-	Password string
-}
-
 type AppConfig struct {
 	DbPath               string
 	JWTSecret            []byte
@@ -26,7 +21,7 @@ type AppConfig struct {
 	AppGinMode           string
 	AppLogMode           string
 	AppPort              string
-	AppUsersToCreate     []AppUser
+	AppUsersToCreate     []User
 	AppKeyPattern        *regexp.Regexp
 	AppDataMaxSize       int64
 	AppKeysPerUser       int64
@@ -52,12 +47,8 @@ var Config = func() AppConfig {
 	}
 }()
 
-func loadEnvFile() error {
-	return godotenv.Load(path.Join(currentDir(), ".env"))
-}
-
-func parseUserPasswordList(raw string) []AppUser {
-	list := make([]AppUser, 0)
+func parseUserPasswordList(raw string) []User {
+	list := make([]User, 0)
 
 	if len(raw) == 0 {
 		return list
@@ -69,8 +60,9 @@ func parseUserPasswordList(raw string) []AppUser {
 		if len(user) != 2 {
 			Logger.Warn("invalid pattern for allowed users", zap.String("user", item))
 		} else {
-			list = append(list, AppUser{
-				Name:     user[0],
+			list = append(list, User{
+				User:     strings.TrimSuffix(user[0], "!"),
+				Admin:    strings.HasSuffix(user[0], "!"),
 				Password: user[1],
 			})
 		}
