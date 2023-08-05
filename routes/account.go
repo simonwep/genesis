@@ -20,13 +20,18 @@ func UpdateAccount(c *gin.Context) {
 		return
 	}
 
-	// TODO: use upsert
 	var body updateBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
+		return
 	} else if _, err := core.AuthenticateUser(user.User, body.CurrentPassword); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if err := core.SetPasswordForUser(user.User, body.NewPassword); err != nil {
+		return
+	} else if err := core.UpsertUser(core.User{
+		User:     user.User,
+		Admin:    user.Admin,
+		Password: body.NewPassword,
+	}, true); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to update user password", zap.Error(err))
 	} else {

@@ -154,39 +154,6 @@ func DeleteUser(name string) error {
 	return txn.Commit()
 }
 
-func SetPasswordForUser(name string, password string) error {
-	user, err := GetUser(name)
-
-	if err != nil {
-		return err
-	} else if user == nil {
-		return fmt.Errorf("no such user with name %v", name)
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("failed to hash password: %v", err)
-	}
-
-	txn := database.NewTransaction(true)
-	defer txn.Discard()
-
-	data, err := json.Marshal(User{
-		User:     name,
-		Password: string(hash),
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to create user data: %v", err)
-	} else if err := txn.Set(buildUserKey(name), data); err != nil {
-		return fmt.Errorf("failed to store user: %v", err)
-	} else if err := txn.Commit(); err != nil {
-		return fmt.Errorf("failed to commit data: %v", err)
-	}
-
-	return nil
-}
-
 func SetDataForUser(name string, key string, data []byte) error {
 	txn := database.NewTransaction(true)
 	defer txn.Discard()
