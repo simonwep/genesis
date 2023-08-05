@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func setup(t *testing.T) string {
+func loginUser(t *testing.T) string {
 	core.ResetDatabase()
 	var token string
 
@@ -28,7 +28,7 @@ func setup(t *testing.T) string {
 }
 
 func TestGetAllData(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedGet("/data", AuthorizedConfig{
 		Token: token,
@@ -64,7 +64,7 @@ func TestGetAllData(t *testing.T) {
 }
 
 func TestInvalidJSON(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedPost("/data/bar", AuthorizedBodyConfig{
 		Body:  "{\"hello\": \"world!\"",
@@ -76,7 +76,7 @@ func TestInvalidJSON(t *testing.T) {
 }
 
 func TestSingleObject(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedPost("/data/bar", AuthorizedBodyConfig{
 		Body:  "{\"hello\": 1e5}",
@@ -96,7 +96,7 @@ func TestSingleObject(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedGet("/data/bar", AuthorizedConfig{
 		Token: token,
@@ -107,7 +107,7 @@ func TestEmpty(t *testing.T) {
 }
 
 func TestSingleArray(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedPost("/data/bar", AuthorizedBodyConfig{
 		Body:  "[1, 2, 3, 4, 5, 6]",
@@ -127,7 +127,7 @@ func TestSingleArray(t *testing.T) {
 }
 
 func TestInvalidKeys(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedPost("/data/HsRLrSgCFylAK77aJmvRon0ubjXjzPFtd", AuthorizedBodyConfig{ // too long
 		Body:  "{\"hello\": \"world!\"}",
@@ -147,7 +147,7 @@ func TestInvalidKeys(t *testing.T) {
 }
 
 func TestDeleteData(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedPost("/data/bar", AuthorizedBodyConfig{
 		Body:  "{\"hello\": \"world!\"}",
@@ -181,7 +181,7 @@ func TestDeleteData(t *testing.T) {
 }
 
 func TestTooBig(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	body1 := strings.Repeat("{\"hello\": \"world!\"},", 10)
 	tryAuthorizedPost("/data/bar", AuthorizedBodyConfig{
@@ -203,7 +203,7 @@ func TestTooBig(t *testing.T) {
 }
 
 func TestTooMany(t *testing.T) {
-	token := setup(t)
+	token := loginUser(t)
 
 	tryAuthorizedPost("/data/bar1", AuthorizedBodyConfig{
 		Body:  "{\"hello\": \"world!\"}",

@@ -7,12 +7,12 @@ import (
 	"net/http"
 )
 
-type UpdateBody struct {
+type updateBody struct {
 	CurrentPassword string `json:"currentPassword"`
 	NewPassword     string `json:"newPassword"`
 }
 
-func Update(c *gin.Context) {
+func UpdateAccount(c *gin.Context) {
 	user := AuthenticateUser(c)
 
 	if user == nil {
@@ -20,7 +20,8 @@ func Update(c *gin.Context) {
 		return
 	}
 
-	var body UpdateBody
+	// TODO: use upsert
+	var body updateBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if _, err := core.AuthenticateUser(user.User, body.CurrentPassword); err != nil {

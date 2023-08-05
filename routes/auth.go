@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type LoginBody struct {
+type loginBody struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
 }
@@ -21,16 +21,19 @@ type LoginResponse struct {
 const refreshAccessCookieName = "genesis_refresh_token"
 
 func Login(c *gin.Context) {
-	var body LoginBody
+	var body loginBody
 
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
 
-	if _, err := core.GetUser(body.User); err != nil {
+	if user, err := core.GetUser(body.User); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to check for user", zap.Error(err))
+		return
+	} else if user == nil {
+		c.Status(http.StatusUnauthorized)
 		return
 	}
 

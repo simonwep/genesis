@@ -24,27 +24,37 @@ type User struct {
 	Password string `json:"password"`
 }
 
+type PublicUser struct {
+	User  string `json:"user"`
+	Admin bool   `json:"admin"`
+}
+
 var database *badger.DB
 
-func CreateUser(name string, password string, admin bool) error {
+func UpsertUser(user User, update bool) error {
 	txn := database.NewTransaction(true)
-	key := buildUserKey(name)
+	key := buildUserKey(user.User)
 	defer txn.Discard()
 
-	if item, err := txn.Get(key); item != nil {
-		return fmt.Errorf("a user with the name %v already exists", name)
-	} else if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
+	item, err := txn.Get(key)
+	if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
 		return fmt.Errorf("failed to check if user already exists")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if update && item == nil {
+		return fmt.Errorf("a user with the name %v does not exist", user.User)
+	} else if !update && item != nil {
+		return fmt.Errorf("a user with the name %v already exists", user.User)
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)
 	}
 
 	data, err := json.Marshal(User{
-		User:     name,
-		Admin:    admin,
+		User:     user.User,
+		Admin:    user.Admin,
 		Password: string(hash),
 	})
 
@@ -91,6 +101,57 @@ func GetUser(name string) (*User, error) {
 	return &user, data.Value(func(val []byte) error {
 		return json.Unmarshal(val, &user)
 	})
+}
+
+func GetUsers() ([]*PublicUser, error) {
+	txn := database.NewTransaction(true)
+	defer txn.Discard()
+
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer it.Close()
+
+	users := make([]*PublicUser, 0)
+	prefix := buildUserKey("")
+
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		var user PublicUser
+		err := it.Item().Value(func(val []byte) error {
+			return json.Unmarshal(val, &user)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, &user)
+	}
+
+	return users, nil
+}
+
+func DeleteUser(name string) error {
+	txn := database.NewTransaction(true)
+	defer txn.Discard()
+
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+
+	// Remove data
+	prefix := buildUserDataKey(name, "")
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		if err := txn.Delete(it.Item().Key()); err != nil {
+			it.Close()
+			return err
+		}
+	}
+
+	it.Close()
+
+	// Remove user
+	if err := txn.Delete(buildUserKey(name)); err != nil {
+		return err
+	}
+
+	return txn.Commit()
 }
 
 func SetPasswordForUser(name string, password string) error {
@@ -252,16 +313,14 @@ func ResetDatabase() {
 
 func initializeUsers() {
 	for _, user := range Config.AppUsersToCreate {
-		usr, err := GetUser(user.User)
-
-		if err != nil {
+		if existingUser, err := GetUser(user.User); err != nil {
 			Logger.Error("failed to check for user", zap.Error(err))
-		} else if usr == nil {
-			if err = CreateUser(user.User, user.Password, user.Admin); err != nil {
-				Logger.Error("failed to create user", zap.Error(err))
-			} else {
-				Logger.Info("created new user", zap.String("name", user.User), zap.Bool("admin", user.Admin))
-			}
+		} else if existingUser != nil {
+			Logger.Error("a user with this name already exists", zap.String("name", user.User))
+		} else if err = UpsertUser(user, false); err != nil {
+			Logger.Error("failed to create user", zap.Error(err))
+		} else {
+			Logger.Info("created new user", zap.String("name", user.User), zap.Bool("admin", user.Admin))
 		}
 	}
 }

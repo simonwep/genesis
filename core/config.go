@@ -40,14 +40,14 @@ var Config = func() AppConfig {
 		AppGinMode:           os.Getenv("GENESIS_GIN_MODE"),
 		AppLogMode:           os.Getenv("GENESIS_LOG_MODE"),
 		AppPort:              os.Getenv("GENESIS_PORT"),
-		AppUsersToCreate:     parseUserPasswordList(os.Getenv("GENESIS_CREATE_USERS")),
+		AppUsersToCreate:     parseInitialUserList(os.Getenv("GENESIS_CREATE_USERS")),
 		AppKeyPattern:        regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
 		AppDataMaxSize:       parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
 		AppKeysPerUser:       parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
 	}
 }()
 
-func parseUserPasswordList(raw string) []User {
+func parseInitialUserList(raw string) []User {
 	list := make([]User, 0)
 
 	if len(raw) == 0 {

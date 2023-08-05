@@ -46,8 +46,9 @@ Genesis should then be accessible under port `8088`.
 
 ### API
 
-The API is kept as simple as possible, there is nothing more than simple data-validation, json-storage and user-authentication.
-It comes with the following endpoints (so far):
+The API is kept as simple as possible, there is nothing more than user, data and account management.
+
+#### Authentication and account
 
 * `POST /login` - Authenticates a user via [JWT](https://jwt.io/).
   - Takes a `user` and `password` as json object.
@@ -60,6 +61,18 @@ It comes with the following endpoints (so far):
 * `POST /account/update`
   - Takes a `newPassword` and `currentPassword` as json object.
   - Returns `200` if the password was successfully updated, otherwise `400`.
+
+#### User management
+
+> These endpoints can only be used by admins.
+
+* `GET /user` - Fetch all users.
+* `POST /user` - Create a user, takes a json object with `user`, `password` and `admin` (bool).
+* `POST /user/:name` - Update a user.
+* `DELETE /user/:name` - Delete a user by its username.
+
+#### Data endpoints
+
 * `GET /data` - Retrieves all data from a user as object.
 * `GET /data/:key` - Retrieves the data stored for the given `key`. Returns `204` if there is no content.
 * `POST /data/:key` - Stores / overrides the data for `key`.

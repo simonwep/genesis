@@ -20,8 +20,14 @@ func SetupRoutes() *gin.Engine {
 	// Auth and account endpoints
 	router.POST("/login", Login)
 	router.POST("/login/refresh", Refresh)
-	router.POST("/account/update", Update)
+	router.POST("/account/update", UpdateAccount)
 	router.POST("/logout", Logout)
+
+	// User endpoints
+	router.GET("/user", GetUser)
+	router.POST("/user", CreateUser)
+	router.POST("/user/:name", UpdateUser)
+	router.DELETE("/user/:name", DeleteUser)
 
 	// Data endpoints
 	router.POST("/data/:key", middleware.LimitBodySize(core.Config.AppDataMaxSize), middleware.MinifyJson(), SetData)
