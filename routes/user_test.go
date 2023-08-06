@@ -18,7 +18,7 @@ func loginAdmin(t *testing.T) string {
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 			data := LoginResponse{}
-			json.Unmarshal(response.Body.Bytes(), &data)
+			_ = json.Unmarshal(response.Body.Bytes(), &data)
 			token = data.Token
 		},
 	})
@@ -132,6 +132,24 @@ func TestUpdateUser(t *testing.T) {
 		Body: "{\"user\":\"foo\", \"password\":\"hgEiPCZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	// invalid password
+	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
+		Token: token,
+		Body:  "{\"user\":\"foo\",\"password\":\"\",\"admin\":true}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusBadRequest, response.Code)
+		},
+	})
+
+	// would override other user
+	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
+		Token: token,
+		Body:  "{\"user\":\"bar\",\"password\":\"eJRG6gIU\",\"admin\":true}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusConflict, response.Code)
 		},
 	})
 

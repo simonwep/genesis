@@ -28,6 +28,20 @@ func TestLogin(t *testing.T) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},
 	})
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"123456\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusUnauthorized, response.Code)
+		},
+	})
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusBadRequest, response.Code)
+		},
+	})
 }
 
 func TestLogout(t *testing.T) {

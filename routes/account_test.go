@@ -18,14 +18,14 @@ func TestUpdatePassword(t *testing.T) {
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 			data := LoginResponse{}
-			json.Unmarshal(response.Body.Bytes(), &data)
+			_ = json.Unmarshal(response.Body.Bytes(), &data)
 			token = data.Token
 		},
 	})
 
 	tryAuthorizedPost("/account/update", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"currentPassword\": \"hgEiPCZP\",\"newPassword\": \"hg235ZP\"}",
+		Body:  "{\"currentPassword\": \"hgEiPCZP\",\"newPassword\": \"6sBX4AZb\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},
@@ -33,9 +33,9 @@ func TestUpdatePassword(t *testing.T) {
 
 	tryAuthorizedPost("/account/update", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"currentPassword\": \"hgEiPCZP\",\"newPassword\": \"hg235ZP\"}",
+		Body:  "{\"currentPassword\": \"hgEiPCZP\",\"newPassword\": \"6sBX4AZb\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusBadRequest, response.Code)
+			assert.Equal(t, http.StatusUnauthorized, response.Code)
 		},
 	})
 
@@ -47,7 +47,7 @@ func TestUpdatePassword(t *testing.T) {
 	})
 
 	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
-		Body: "{\"user\": \"foo\", \"password\": \"hg235ZP\"}",
+		Body: "{\"user\": \"foo\", \"password\": \"6sBX4AZb\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},

@@ -25,15 +25,20 @@ func CreateUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
+	name := c.Param("name")
 	var body core.User
 
 	if !isAsAdminAuthenticated(c) {
 		c.Status(http.StatusUnauthorized)
 	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if err := core.UpsertUser(body, true); err != nil {
+	} else if usr, err := core.GetUser(body.User); err != nil {
 		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to create user", zap.Error(err))
+		core.Logger.Error("failed to retrieve user", zap.Error(err))
+	} else if name != body.User && usr != nil {
+		c.Status(http.StatusConflict)
+	} else if err := core.UpsertUser(body, true); err != nil {
+		c.Status(http.StatusBadRequest)
 	} else {
 		c.Status(http.StatusOK)
 	}
@@ -63,7 +68,6 @@ func GetUser(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, list)
 	}
-
 }
 
 func isAsAdminAuthenticated(c *gin.Context) bool {

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/simonwep/genesis/core"
 	"go.uber.org/zap"
 	"net/http"
@@ -9,8 +10,8 @@ import (
 )
 
 type loginBody struct {
-	User     string `json:"user"`
-	Password string `json:"password"`
+	User     string `json:"user" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginResponse struct {
@@ -20,10 +21,15 @@ type LoginResponse struct {
 
 const refreshAccessCookieName = "genesis_refresh_token"
 
+var validate = validator.New()
+
 func Login(c *gin.Context) {
 	var body loginBody
 
 	if err := c.ShouldBindJSON(&body); err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	} else if err := validate.Struct(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	}
