@@ -14,6 +14,8 @@ func CreateUser(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
+	} else if !core.Config.AppUserPattern.MatchString(body.User) {
+		c.Status(http.StatusBadRequest)
 	} else if err := core.UpsertUser(body, false); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to create user", zap.Error(err))

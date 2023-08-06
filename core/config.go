@@ -22,6 +22,7 @@ type AppConfig struct {
 	AppLogMode           string
 	AppPort              string
 	AppUsersToCreate     []User
+	AppUserPattern       *regexp.Regexp
 	AppKeyPattern        *regexp.Regexp
 	AppDataMaxSize       int64
 	AppKeysPerUser       int64
@@ -41,6 +42,7 @@ var Config = func() AppConfig {
 		AppLogMode:           os.Getenv("GENESIS_LOG_MODE"),
 		AppPort:              os.Getenv("GENESIS_PORT"),
 		AppUsersToCreate:     parseInitialUserList(os.Getenv("GENESIS_CREATE_USERS")),
+		AppUserPattern:       regexp.MustCompile(os.Getenv("GENESIS_USERNAME_PATTERN")),
 		AppKeyPattern:        regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
 		AppDataMaxSize:       parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
 		AppKeysPerUser:       parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
