@@ -21,21 +21,21 @@ var validate = validator.New()
 func Login(c *gin.Context) {
 	user := authenticateUser(c)
 
+	if user != nil {
+		c.JSON(http.StatusOK, core.PublicUser{
+			User:  user.User,
+			Admin: user.Admin,
+		})
+
+		return
+	}
+
 	var body loginBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
 	} else if err := validate.Struct(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-		return
-	}
-
-	if user, err := core.GetUser(body.User); err != nil {
-		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to check for user", zap.Error(err))
-		return
-	} else if user == nil {
-		c.Status(http.StatusUnauthorized)
 		return
 	}
 
@@ -59,7 +59,10 @@ func Login(c *gin.Context) {
 			SameSite: http.SameSiteStrictMode,
 		})
 
-		c.Status(http.StatusOK)
+		c.JSON(http.StatusOK, core.PublicUser{
+			User:  user.User,
+			Admin: user.Admin,
+		})
 	}
 }
 

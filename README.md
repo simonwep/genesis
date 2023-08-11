@@ -51,7 +51,7 @@ The API is kept as simple as possible, there is nothing more than user, data and
 #### Authentication and account
 
 * `POST /login` - Authenticates a user.
-  - Takes a `user` and `password` as json object and returns the user-data and a session cookie.
+  - Takes either a `user` and `password` as json object and returns the user-data and a session cookie or, if a session-cookie exists, the current user.
   - Returns `401` the password is invalid or the user doesn't exist.
 * `POST /logout` - Invalidates the current refresh token and logs out a user.
 * `POST /account/update`

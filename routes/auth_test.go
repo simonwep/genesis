@@ -31,6 +31,7 @@ func loginAdmin(t *testing.T) string {
 		Body: "{\"user\": \"bar\", \"password\": \"EczUR8dn\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
+			assert.Equal(t, "{\"user\":\"bar\",\"admin\":true}", response.Body.String())
 			token = response.Header().Get("Set-Cookie")
 		},
 	})
@@ -88,6 +89,24 @@ func TestLogout(t *testing.T) {
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusUnauthorized, response.Code)
+		},
+	})
+}
+
+func TestReLogin(t *testing.T) {
+	token := loginUser(t)
+
+	tryAuthorizedPost("/login", AuthorizedBodyConfig{
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedPost("/login", AuthorizedBodyConfig{
+		Token: "",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusBadRequest, response.Code)
 		},
 	})
 }
