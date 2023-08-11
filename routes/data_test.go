@@ -1,31 +1,12 @@
 package routes
 
 import (
-	"encoding/json"
-	"github.com/simonwep/genesis/core"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
-
-func loginUser(t *testing.T) string {
-	core.ResetDatabase()
-	var token string
-
-	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
-		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
-		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusOK, response.Code)
-			data := LoginResponse{}
-			json.Unmarshal(response.Body.Bytes(), &data)
-			token = data.Token
-		},
-	})
-
-	return token
-}
 
 func TestGetAllData(t *testing.T) {
 	token := loginUser(t)

@@ -8,6 +8,36 @@ import (
 	"testing"
 )
 
+func loginUser(t *testing.T) string {
+	core.ResetDatabase()
+	var token string
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+			token = response.Header().Get("Set-Cookie")
+		},
+	})
+
+	return token
+}
+
+func loginAdmin(t *testing.T) string {
+	core.ResetDatabase()
+	var token string
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"bar\", \"password\": \"EczUR8dn\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+			token = response.Header().Get("Set-Cookie")
+		},
+	})
+
+	return token
+}
+
 func TestInvalidLogin(t *testing.T) {
 	core.ResetDatabase()
 
@@ -45,46 +75,17 @@ func TestLogin(t *testing.T) {
 }
 
 func TestLogout(t *testing.T) {
-	core.ResetDatabase()
+	token := loginUser(t)
 
-	var cookie1 string
-	var cookie2 string
-
-	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
-		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
-		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusOK, response.Code)
-			cookie1 = response.Header().Get("Set-Cookie")
-		},
-	})
-
-	// invalidate first cookie by rotating the key
-	tryAuthorizedPost("/login/refresh", AuthorizedBodyConfig{
-		Cookie: cookie1,
-		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusOK, response.Code)
-			cookie2 = response.Header().Get("Set-Cookie")
-		},
-	})
-
-	// invalidate the second one directly
 	tryAuthorizedPost("/logout", AuthorizedBodyConfig{
-		Cookie: cookie2,
+		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},
 	})
 
-	// both tokens should be blacklisted
-	tryAuthorizedPost("/login/refresh", AuthorizedBodyConfig{
-		Cookie: cookie1,
-		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusUnauthorized, response.Code)
-		},
-	})
-
-	tryAuthorizedPost("/login/refresh", AuthorizedBodyConfig{
-		Cookie: cookie2,
+	tryAuthorizedGet("/data", AuthorizedConfig{
+		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusUnauthorized, response.Code)
 		},

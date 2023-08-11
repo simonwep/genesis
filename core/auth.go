@@ -11,20 +11,11 @@ type JWTClaim struct {
 	jwt.RegisteredClaims
 }
 
-func CreateAccessToken(user *User) (string, error) {
+func CreateAuthToken(user *User) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaim{
 		User: user.User,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Config.JWTAccessExpiration)),
-		},
-	}).SignedString(Config.JWTSecret)
-}
-
-func CreateRefreshToken(user *User) (string, error) {
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaim{
-		User: user.User,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Config.JWTRefreshExpiration)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Config.JWTExpiration)),
 			ID:        uuid.NewString(),
 		},
 	}).SignedString(Config.JWTSecret)

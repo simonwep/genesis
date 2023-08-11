@@ -8,11 +8,10 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 func Data(c *gin.Context) {
-	user := AuthenticateUser(c)
+	user := authenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -26,7 +25,7 @@ func Data(c *gin.Context) {
 
 func DataByKey(c *gin.Context) {
 	key := c.Param("key")
-	user := AuthenticateUser(c)
+	user := authenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -46,7 +45,7 @@ func DataByKey(c *gin.Context) {
 
 func SetData(c *gin.Context) {
 	key := c.Param("key")
-	user := AuthenticateUser(c)
+	user := authenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -68,7 +67,7 @@ func SetData(c *gin.Context) {
 
 func DeleteData(c *gin.Context) {
 	key := c.Param("key")
-	user := AuthenticateUser(c)
+	user := authenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
@@ -77,18 +76,6 @@ func DeleteData(c *gin.Context) {
 		core.Logger.Error("failed to delete data", zap.Error(err))
 	} else {
 		c.Status(http.StatusOK)
-	}
-}
-
-func AuthenticateUser(c *gin.Context) *core.User {
-	token := strings.Split(c.GetHeader("Authorization"), "Bearer ")[1]
-
-	if parsed, err := core.ParseAuthToken(token); err != nil || parsed == nil {
-		return nil
-	} else if user, err := core.GetUser(parsed.User); err != nil {
-		return nil
-	} else {
-		return user
 	}
 }
 

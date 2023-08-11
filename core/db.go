@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	dbKeySeparator      = "/"
-	dbUserPrefix        = "usr"
-	dbDataPrefix        = "dta"
-	dbExpireTokenPrefix = "exp"
+	dbKeySeparator       = "/"
+	dbUserPrefix         = "usr"
+	dbDataPrefix         = "dta"
+	dbExpiredTokenPrefix = "exp"
 )
 
 type User struct {
@@ -309,7 +309,7 @@ func printDebugInformation() {
 	results := make(map[string]int)
 	results[dbUserPrefix] = 0
 	results[dbDataPrefix] = 0
-	results[dbExpireTokenPrefix] = 0
+	results[dbExpiredTokenPrefix] = 0
 
 	for it.Rewind(); it.Valid(); it.Next() {
 		key := strings.Split(string(it.Item().Key()), dbKeySeparator)
@@ -318,11 +318,11 @@ func printDebugInformation() {
 
 	Logger.Info("users", zap.Int("count", results[dbUserPrefix]))
 	Logger.Info("datasets", zap.Int("count", results[dbDataPrefix]))
-	Logger.Info("expired keys", zap.Int("count", results[dbExpireTokenPrefix]))
+	Logger.Info("expired keys", zap.Int("count", results[dbExpiredTokenPrefix]))
 }
 
 func buildExpiredKey(key string) []byte {
-	return []byte(dbExpireTokenPrefix + dbKeySeparator + key)
+	return []byte(dbExpiredTokenPrefix + dbKeySeparator + key)
 }
 
 func buildUserKey(name string) []byte {

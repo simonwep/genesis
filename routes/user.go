@@ -71,6 +71,6 @@ func GetUser(c *gin.Context) {
 }
 
 func isAsAdminAuthenticated(c *gin.Context) bool {
-	user := AuthenticateUser(c)
+	user := authenticateUser(c)
 	return user != nil && user.Admin
 }

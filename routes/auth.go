@@ -14,18 +14,14 @@ type loginBody struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type LoginResponse struct {
-	Token     string `json:"token"`
-	ExpiresAt int64  `json:"expiresAt"`
-}
-
-const refreshAccessCookieName = "genesis_refresh_token"
+const cookieName = "gt"
 
 var validate = validator.New()
 
 func Login(c *gin.Context) {
-	var body loginBody
+	user := authenticateUser(c)
 
+	var body loginBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 		return
@@ -49,11 +45,26 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	issueTokens(c, user)
+	if refreshToken, err := core.CreateAuthToken(user); err != nil {
+		c.Status(http.StatusInternalServerError)
+		core.Logger.Error("failed to create auth token", zap.Error(err))
+	} else {
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     cookieName,
+			Value:    refreshToken,
+			Path:     "/",
+			Expires:  time.Now().Add(core.Config.JWTExpiration),
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+
+		c.Status(http.StatusOK)
+	}
 }
 
 func Logout(c *gin.Context) {
-	refreshToken, err := c.Cookie(refreshAccessCookieName)
+	refreshToken, err := c.Cookie(cookieName)
 
 	if err != nil || len(refreshToken) == 0 {
 		c.Status(http.StatusUnauthorized)
@@ -63,7 +74,7 @@ func Logout(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 	} else {
 		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     refreshAccessCookieName,
+			Name:     cookieName,
 			Value:    "",
 			Path:     "/",
 			Expires:  time.Now(),
@@ -76,43 +87,16 @@ func Logout(c *gin.Context) {
 	}
 }
 
-func Refresh(c *gin.Context) {
-	refreshToken, err := c.Cookie(refreshAccessCookieName)
+func authenticateUser(c *gin.Context) *core.User {
+	refreshToken, err := c.Cookie(cookieName)
 
 	if err != nil || len(refreshToken) == 0 {
-		c.Status(http.StatusUnauthorized)
+		return nil
 	} else if parsed, err := core.ParseAuthToken(refreshToken); err != nil || parsed == nil {
-		c.Status(http.StatusUnauthorized)
+		return nil
 	} else if user, err := core.GetUser(parsed.User); err != nil {
-		c.Status(http.StatusUnauthorized)
-	} else if err := core.StoreInvalidatedToken(parsed.ID, parsed.ExpiresAt.Sub(time.Now())); err != nil {
-		c.Status(http.StatusInternalServerError)
+		return nil
 	} else {
-		issueTokens(c, user)
-	}
-}
-
-func issueTokens(c *gin.Context, user *core.User) {
-	if accessToken, err := core.CreateAccessToken(user); err != nil {
-		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to create auth token", zap.Error(err))
-	} else if refreshToken, err := core.CreateRefreshToken(user); err != nil {
-		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to create auth token", zap.Error(err))
-	} else {
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     refreshAccessCookieName,
-			Value:    refreshToken,
-			Path:     "/",
-			Expires:  time.Now().Add(core.Config.JWTRefreshExpiration),
-			Secure:   true,
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		})
-
-		c.JSON(http.StatusOK, LoginResponse{
-			Token:     accessToken,
-			ExpiresAt: time.Now().UnixMilli() + core.Config.JWTAccessExpiration.Milliseconds(),
-		})
+		return user
 	}
 }

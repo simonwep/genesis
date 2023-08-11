@@ -14,18 +14,17 @@ import (
 )
 
 type AppConfig struct {
-	DbPath               string
-	JWTSecret            []byte
-	JWTAccessExpiration  time.Duration
-	JWTRefreshExpiration time.Duration
-	AppGinMode           string
-	AppLogMode           string
-	AppPort              string
-	AppUsersToCreate     []User
-	AppUserPattern       *regexp.Regexp
-	AppKeyPattern        *regexp.Regexp
-	AppDataMaxSize       int64
-	AppKeysPerUser       int64
+	DbPath           string
+	JWTSecret        []byte
+	JWTExpiration    time.Duration
+	AppGinMode       string
+	AppLogMode       string
+	AppPort          string
+	AppUsersToCreate []User
+	AppUserPattern   *regexp.Regexp
+	AppKeyPattern    *regexp.Regexp
+	AppDataMaxSize   int64
+	AppKeysPerUser   int64
 }
 
 var Config = func() AppConfig {
@@ -34,18 +33,17 @@ var Config = func() AppConfig {
 	}
 
 	return AppConfig{
-		DbPath:               resolvePath(os.Getenv("GENESIS_DB_PATH")),
-		JWTSecret:            []byte(os.Getenv("GENESIS_JWT_SECRET")),
-		JWTAccessExpiration:  time.Duration(parseInt(os.Getenv("GENESIS_JWT_ACCESS_TOKEN_EXPIRATION"))) * time.Minute,
-		JWTRefreshExpiration: time.Duration(parseInt(os.Getenv("GENESIS_JWT_REFRESH_TOKEN_EXPIRATION"))) * time.Minute,
-		AppGinMode:           os.Getenv("GENESIS_GIN_MODE"),
-		AppLogMode:           os.Getenv("GENESIS_LOG_MODE"),
-		AppPort:              os.Getenv("GENESIS_PORT"),
-		AppUsersToCreate:     parseInitialUserList(os.Getenv("GENESIS_CREATE_USERS")),
-		AppUserPattern:       regexp.MustCompile(os.Getenv("GENESIS_USERNAME_PATTERN")),
-		AppKeyPattern:        regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
-		AppDataMaxSize:       parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
-		AppKeysPerUser:       parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
+		DbPath:           resolvePath(os.Getenv("GENESIS_DB_PATH")),
+		JWTSecret:        []byte(os.Getenv("GENESIS_JWT_SECRET")),
+		JWTExpiration:    time.Duration(parseInt(os.Getenv("GENESIS_JWT_TOKEN_EXPIRATION"))) * time.Minute,
+		AppGinMode:       os.Getenv("GENESIS_GIN_MODE"),
+		AppLogMode:       os.Getenv("GENESIS_LOG_MODE"),
+		AppPort:          os.Getenv("GENESIS_PORT"),
+		AppUsersToCreate: parseInitialUserList(os.Getenv("GENESIS_CREATE_USERS")),
+		AppUserPattern:   regexp.MustCompile(os.Getenv("GENESIS_USERNAME_PATTERN")),
+		AppKeyPattern:    regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
+		AppDataMaxSize:   parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
+		AppKeysPerUser:   parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
 	}
 }()
 

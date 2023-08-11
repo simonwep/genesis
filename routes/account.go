@@ -12,7 +12,7 @@ type updateBody struct {
 }
 
 func UpdateAccount(c *gin.Context) {
-	user := AuthenticateUser(c)
+	user := authenticateUser(c)
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)

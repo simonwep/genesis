@@ -50,17 +50,15 @@ The API is kept as simple as possible, there is nothing more than user, data and
 
 #### Authentication and account
 
-* `POST /login` - Authenticates a user via [JWT](https://jwt.io/).
-  - Takes a `user` and `password` as json object.
-  - Returns `{ expiresAt: number, token: string}` as body (`expiresAt` is a unix timestamp) and a refresh-token in the form of a cookie.
+* `POST /login` - Authenticates a user.
+  - Takes a `user` and `password` as json object and returns the user-data and a session cookie.
   - Returns `401` the password is invalid or the user doesn't exist.
-* `GET /login/refresh` - Refreshes the access token and rotates the refresh token.
-  - Returns `200` on success and `{ expiresAt: number, token: string}` as body. It also returns a new refresh-token in the form of a cookie.
-  - Returns `401` if the refresh token is invalid / expired, or the user doesn't exist.
 * `POST /logout` - Invalidates the current refresh token and logs out a user.
 * `POST /account/update`
   - Takes a `newPassword` and `currentPassword` as json object.
   - Returns `200` if the password was successfully updated, otherwise `400`.
+
+> The JWT token is returned as strict same-site, secure and http-only cookie!
 
 #### Data endpoints
 
