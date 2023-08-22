@@ -20,13 +20,13 @@ const (
 )
 
 type User struct {
-	User     string `json:"user" validate:"required,gte=3,lte=32"`
+	Name     string `json:"name" validate:"required,gte=3,lte=32"`
 	Admin    bool   `json:"admin"`
 	Password string `json:"password" validate:"required,gte=8,lte=128"`
 }
 
 type PublicUser struct {
-	User  string `json:"user"`
+	Name  string `json:"name"`
 	Admin bool   `json:"admin"`
 }
 
@@ -40,7 +40,7 @@ func UpsertUser(user User, update bool) error {
 	}
 
 	txn := database.NewTransaction(true)
-	key := buildUserKey(user.User)
+	key := buildUserKey(user.Name)
 	defer txn.Discard()
 
 	item, err := txn.Get(key)
@@ -49,9 +49,9 @@ func UpsertUser(user User, update bool) error {
 	}
 
 	if update && item == nil {
-		return fmt.Errorf("a user with the name %v does not exist", user.User)
+		return fmt.Errorf("a user with the name %v does not exist", user.Name)
 	} else if !update && item != nil {
-		return fmt.Errorf("a user with the name %v already exists", user.User)
+		return fmt.Errorf("a user with the name %v already exists", user.Name)
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -60,7 +60,7 @@ func UpsertUser(user User, update bool) error {
 	}
 
 	data, err := json.Marshal(User{
-		User:     user.User,
+		Name:     user.Name,
 		Admin:    user.Admin,
 		Password: string(hash),
 	})
@@ -287,14 +287,14 @@ func ResetDatabase() {
 
 func initializeUsers() {
 	for _, user := range Config.AppUsersToCreate {
-		if existingUser, err := GetUser(user.User); err != nil {
+		if existingUser, err := GetUser(user.Name); err != nil {
 			Logger.Error("failed to check for user", zap.Error(err))
 		} else if existingUser != nil {
-			Logger.Error("a user with this name already exists", zap.String("name", user.User))
+			Logger.Error("a user with this name already exists", zap.String("name", user.Name))
 		} else if err = UpsertUser(user, false); err != nil {
 			Logger.Error("failed to create user", zap.Error(err))
 		} else {
-			Logger.Info("created new user", zap.String("name", user.User), zap.Bool("admin", user.Admin))
+			Logger.Info("created new user", zap.String("name", user.Name), zap.Bool("admin", user.Admin))
 		}
 	}
 }

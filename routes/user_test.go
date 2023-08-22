@@ -11,32 +11,32 @@ func TestUnauthorizedAccess(t *testing.T) {
 	token := loginUser(t)
 
 	tryAuthorizedPost("/user", AuthorizedBodyConfig{
-		Body:  "{\"user\": \"test\", \"password\": \"foobar1234\", \"admin\": false}",
+		Body:  "{\"name\": \"test\", \"password\": \"foobar1234\", \"admin\": false}",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusUnauthorized, response.Code)
+			assert.Equal(t, http.StatusForbidden, response.Code)
 		},
 	})
 
 	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
-		Body:  "{\"user\": \"test\", \"password\": \"foobar1234\", \"admin\": false}",
+		Body:  "{\"name\": \"test\", \"password\": \"foobar1234\", \"admin\": false}",
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusUnauthorized, response.Code)
+			assert.Equal(t, http.StatusForbidden, response.Code)
 		},
 	})
 
 	tryAuthorizedGet("/user", AuthorizedConfig{
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusUnauthorized, response.Code)
+			assert.Equal(t, http.StatusForbidden, response.Code)
 		},
 	})
 
 	tryAuthorizedDelete("/user/foo", AuthorizedConfig{
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusUnauthorized, response.Code)
+			assert.Equal(t, http.StatusForbidden, response.Code)
 		},
 	})
 }
@@ -47,8 +47,8 @@ func TestRetrieveUsers(t *testing.T) {
 	tryAuthorizedGet("/user", AuthorizedConfig{
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			bar := "{\"user\":\"bar\",\"admin\":true}"
-			foo := "{\"user\":\"foo\",\"admin\":false}"
+			bar := "{\"name\":\"bar\",\"admin\":true}"
+			foo := "{\"name\":\"foo\",\"admin\":false}"
 			assert.Equal(t, "["+bar+","+foo+"]", response.Body.String())
 		},
 	})
@@ -84,7 +84,7 @@ func TestCreateUser(t *testing.T) {
 
 	tryAuthorizedPost("/user", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"user\":\"test2\",\"password\":\"foobar1235\",\"admin\":true}",
+		Body:  "{\"name\":\"test2\",\"password\":\"foobar1235\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusCreated, response.Code)
 		},
@@ -92,7 +92,7 @@ func TestCreateUser(t *testing.T) {
 
 	tryAuthorizedPost("/user", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"user\":\"test//2\",\"password\":\"foobar1235\",\"admin\":true}",
+		Body:  "{\"name\":\"test//2\",\"password\":\"foobar1235\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusBadRequest, response.Code)
 		},
@@ -119,7 +119,7 @@ func TestUpdateUser(t *testing.T) {
 	// invalid password
 	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"user\":\"foo\",\"password\":\"\",\"admin\":true}",
+		Body:  "{\"name\":\"foo\",\"password\":\"\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusBadRequest, response.Code)
 		},
@@ -128,7 +128,7 @@ func TestUpdateUser(t *testing.T) {
 	// would override other user
 	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"user\":\"bar\",\"password\":\"eJRG6gIU\",\"admin\":true}",
+		Body:  "{\"name\":\"bar\",\"password\":\"eJRG6gIU\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusConflict, response.Code)
 		},
@@ -136,7 +136,7 @@ func TestUpdateUser(t *testing.T) {
 
 	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"user\":\"foo\",\"password\":\"wK8iVkRO\",\"admin\":true}",
+		Body:  "{\"name\":\"foo\",\"password\":\"wK8iVkRO\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},

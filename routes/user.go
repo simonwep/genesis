@@ -11,10 +11,10 @@ func CreateUser(c *gin.Context) {
 	var body core.User
 
 	if !isAsAdminAuthenticated(c) {
-		c.Status(http.StatusUnauthorized)
+		c.Status(http.StatusForbidden)
 	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if !core.Config.AppUserPattern.MatchString(body.User) {
+	} else if !core.Config.AppUserPattern.MatchString(body.Name) {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.UpsertUser(body, false); err != nil {
 		c.Status(http.StatusInternalServerError)
@@ -29,13 +29,13 @@ func UpdateUser(c *gin.Context) {
 	var body core.User
 
 	if !isAsAdminAuthenticated(c) {
-		c.Status(http.StatusUnauthorized)
+		c.Status(http.StatusForbidden)
 	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if usr, err := core.GetUser(body.User); err != nil {
+	} else if usr, err := core.GetUser(body.Name); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to retrieve user", zap.Error(err))
-	} else if name != body.User && usr != nil {
+	} else if name != body.Name && usr != nil {
 		c.Status(http.StatusConflict)
 	} else if err := core.UpsertUser(body, true); err != nil {
 		c.Status(http.StatusBadRequest)
@@ -48,7 +48,7 @@ func DeleteUser(c *gin.Context) {
 	name := c.Param("name")
 
 	if !isAsAdminAuthenticated(c) {
-		c.Status(http.StatusUnauthorized)
+		c.Status(http.StatusForbidden)
 	} else {
 		if err := core.DeleteUser(name); err != nil {
 			c.Status(http.StatusInternalServerError)
@@ -61,7 +61,7 @@ func DeleteUser(c *gin.Context) {
 
 func GetUser(c *gin.Context) {
 	if !isAsAdminAuthenticated(c) {
-		c.Status(http.StatusUnauthorized)
+		c.Status(http.StatusForbidden)
 	} else if list, err := core.GetUsers(); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to retrieve users", zap.Error(err))

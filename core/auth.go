@@ -13,7 +13,7 @@ type JWTClaim struct {
 
 func CreateAuthToken(user *User) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaim{
-		User: user.User,
+		User: user.Name,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Config.JWTExpiration)),
 			ID:        uuid.NewString(),

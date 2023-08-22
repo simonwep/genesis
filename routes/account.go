@@ -22,10 +22,10 @@ func UpdateAccount(c *gin.Context) {
 	var body updateBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if _, err := core.AuthenticateUser(user.User, body.CurrentPassword); err != nil {
+	} else if _, err := core.AuthenticateUser(user.Name, body.CurrentPassword); err != nil {
 		c.Status(http.StatusUnauthorized)
 	} else if err := core.UpsertUser(core.User{
-		User:     user.User,
+		Name:     user.Name,
 		Admin:    user.Admin,
 		Password: body.NewPassword,
 	}, true); err != nil {

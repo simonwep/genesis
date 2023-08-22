@@ -15,7 +15,7 @@ func Data(c *gin.Context) {
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
-	} else if data, err := core.GetAllDataFromUser(user.User); err != nil {
+	} else if data, err := core.GetAllDataFromUser(user.Name); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to retrieve data", zap.Error(err))
 	} else {
@@ -31,7 +31,7 @@ func DataByKey(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 	} else if !core.Config.AppKeyPattern.MatchString(key) {
 		c.Status(http.StatusNotFound)
-	} else if data, err := core.GetDataFromUser(user.User, key); err != nil {
+	} else if data, err := core.GetDataFromUser(user.Name, key); err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
 			c.Status(http.StatusNoContent)
 		} else {
@@ -51,13 +51,13 @@ func SetData(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 	} else if !core.Config.AppKeyPattern.MatchString(key) {
 		c.Status(http.StatusBadRequest)
-	} else if count := core.GetDataCountForUser(user.User, key); count > core.Config.AppKeysPerUser {
+	} else if count := core.GetDataCountForUser(user.Name, key); count > core.Config.AppKeysPerUser {
 		c.Status(http.StatusForbidden)
 	} else if size, err := getContentLength(c); err != nil || size > core.Config.AppDataMaxSize {
 		c.Status(http.StatusRequestEntityTooLarge)
 	} else if body, err := c.GetRawData(); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if err := core.SetDataForUser(user.User, key, body); err != nil {
+	} else if err := core.SetDataForUser(user.Name, key, body); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to set data", zap.Error(err))
 	} else {
@@ -71,7 +71,7 @@ func DeleteData(c *gin.Context) {
 
 	if user == nil {
 		c.Status(http.StatusUnauthorized)
-	} else if err := core.DeleteDataFromUser(user.User, key); err != nil {
+	} else if err := core.DeleteDataFromUser(user.Name, key); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to delete data", zap.Error(err))
 	} else {

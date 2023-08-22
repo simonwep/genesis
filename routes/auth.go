@@ -23,7 +23,7 @@ func Login(c *gin.Context) {
 
 	if user != nil {
 		c.JSON(http.StatusOK, core.PublicUser{
-			User:  user.User,
+			Name:  user.Name,
 			Admin: user.Admin,
 		})
 
@@ -60,7 +60,7 @@ func Login(c *gin.Context) {
 		})
 
 		c.JSON(http.StatusOK, core.PublicUser{
-			User:  user.User,
+			Name:  user.Name,
 			Admin: user.Admin,
 		})
 	}

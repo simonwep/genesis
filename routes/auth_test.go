@@ -16,6 +16,7 @@ func loginUser(t *testing.T) string {
 		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
+			assert.Equal(t, "{\"name\":\"foo\",\"admin\":false}", response.Body.String())
 			token = response.Header().Get("Set-Cookie")
 		},
 	})
@@ -31,7 +32,7 @@ func loginAdmin(t *testing.T) string {
 		Body: "{\"user\": \"bar\", \"password\": \"EczUR8dn\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
-			assert.Equal(t, "{\"user\":\"bar\",\"admin\":true}", response.Body.String())
+			assert.Equal(t, "{\"name\":\"bar\",\"admin\":true}", response.Body.String())
 			token = response.Header().Get("Set-Cookie")
 		},
 	})

@@ -61,7 +61,7 @@ func parseInitialUserList(raw string) []User {
 			Logger.Warn("invalid pattern for allowed users", zap.String("user", item))
 		} else {
 			list = append(list, User{
-				User:     strings.TrimSuffix(user[0], "!"),
+				Name:     strings.TrimSuffix(user[0], "!"),
 				Admin:    strings.HasSuffix(user[0], "!"),
 				Password: user[1],
 			})

@@ -71,7 +71,7 @@ The API is kept as simple as possible, there is nothing more than user, data and
 
 > These endpoints can only be used by admins!
 
-* `GET /user` - Fetch all users.
+* `GET /user` - Fetch all users as `{ name: string, admin: boolean }[]`.
 * `POST /user` - Create a user, takes a json object with `user`, `password` and `admin` (bool).
 * `POST /user/:name` - Update a user by `name`.
 * `DELETE /user/:name` - Delete a user by `name`.
