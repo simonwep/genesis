@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genesis/core"
 	"go.uber.org/zap"
@@ -17,8 +18,12 @@ func CreateUser(c *gin.Context) {
 	} else if !core.Config.AppUserPattern.MatchString(body.Name) {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.UpsertUser(body, false); err != nil {
-		c.Status(http.StatusInternalServerError)
-		core.Logger.Error("failed to create user", zap.Error(err))
+		if errors.Is(err, core.ErrUserAlreadyExists) {
+			c.Status(http.StatusConflict)
+		} else {
+			c.Status(http.StatusInternalServerError)
+			core.Logger.Error("failed to create user", zap.Error(err))
+		}
 	} else {
 		c.Status(http.StatusCreated)
 	}

@@ -92,6 +92,14 @@ func TestCreateUser(t *testing.T) {
 
 	tryAuthorizedPost("/user", AuthorizedBodyConfig{
 		Token: token,
+		Body:  "{\"name\":\"test2\",\"password\":\"foobar1235\",\"admin\":true}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusConflict, response.Code)
+		},
+	})
+
+	tryAuthorizedPost("/user", AuthorizedBodyConfig{
+		Token: token,
 		Body:  "{\"name\":\"test//2\",\"password\":\"foobar1235\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusBadRequest, response.Code)

@@ -15,8 +15,13 @@ import (
 const (
 	dbKeySeparator       = "/"
 	dbUserPrefix         = "usr"
-	dbDataPrefix         = "dta"
+	dbDataPrefix         = "dat"
 	dbExpiredTokenPrefix = "exp"
+)
+
+var (
+	ErrUserAlreadyExists = errors.New("A user with this name already exists")
+	ErrUserNotFound      = errors.New("A user with this name already exists")
 )
 
 type User struct {
@@ -49,14 +54,14 @@ func UpsertUser(user User, update bool) error {
 	}
 
 	if update && item == nil {
-		return fmt.Errorf("a user with the name %v does not exist", user.Name)
+		return ErrUserNotFound
 	} else if !update && item != nil {
-		return fmt.Errorf("a user with the name %v already exists", user.Name)
+		return ErrUserAlreadyExists
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("failed to hash password: %v", err)
+		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	data, err := json.Marshal(User{
@@ -66,11 +71,11 @@ func UpsertUser(user User, update bool) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to create user data: %v", err)
+		return fmt.Errorf("failed to create user data: %w", err)
 	} else if err := txn.Set(key, data); err != nil {
-		return fmt.Errorf("failed to store user: %v", err)
+		return fmt.Errorf("failed to store user: %w", err)
 	} else if err := txn.Commit(); err != nil {
-		return fmt.Errorf("failed to commit data: %v", err)
+		return fmt.Errorf("failed to commit data: %w", err)
 	}
 
 	return nil
@@ -100,7 +105,7 @@ func GetUser(name string) (*User, error) {
 		if errors.Is(err, badger.ErrKeyNotFound) {
 			return nil, nil
 		} else {
-			return nil, fmt.Errorf("failed to retrieve data: %v", err)
+			return nil, fmt.Errorf("failed to retrieve data: %w", err)
 		}
 	}
 
