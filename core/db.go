@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dgraph-io/badger/v4"
-	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
@@ -27,7 +26,7 @@ var (
 type User struct {
 	Name     string `json:"name" validate:"required,gte=3,lte=32"`
 	Admin    bool   `json:"admin"`
-	Password string `json:"password" validate:"required,gte=8,lte=128"`
+	Password string `json:"password" validate:"required,gte=8,lte=64"`
 }
 
 type PublicUser struct {
@@ -37,13 +36,7 @@ type PublicUser struct {
 
 var database *badger.DB
 
-var validate *validator.Validate
-
 func UpsertUser(user User, update bool) error {
-	if err := validate.Struct(&user); err != nil {
-		return err
-	}
-
 	txn := database.NewTransaction(true)
 	key := buildUserKey(user.Name)
 	defer txn.Discard()
@@ -346,7 +339,6 @@ func init() {
 		Logger.Fatal("failed to open database", zap.Error(err))
 	} else {
 		database = db
-		validate = validator.New()
 	}
 
 	initializeUsers()

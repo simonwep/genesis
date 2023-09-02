@@ -58,7 +58,8 @@ The API is kept as simple as possible, there is nothing more than user, data and
   - Takes a `newPassword` and `currentPassword` as json object.
   - Returns `200` if the password was successfully updated, otherwise `400`.
 
-> The JWT token is returned as strict same-site, secure and http-only cookie!
+> The JWT token is returned as strict same-site, secure and http-only cookie!  
+> When changing the password, the new password must fulfill the same requirements for adding a new user.
 
 #### Data endpoints
 
@@ -66,6 +67,9 @@ The API is kept as simple as possible, there is nothing more than user, data and
 * `GET /data/:key` - Retrieves the data stored for the given `key`. Returns `204` if there is no content.
 * `POST /data/:key` - Stores / overrides the data for `key`.
 * `DELETE /data/:key` - Removes the data for `key`, always returns `200`, even if `key` doesn't exist.
+
+> Validation parameters for those endpoints are defined in [.env](.env.example).  
+> This includes a key-pattern, the max amount per user and a size-limit.
 
 #### User management
 
@@ -75,3 +79,6 @@ The API is kept as simple as possible, there is nothing more than user, data and
 * `POST /user` - Create a user, takes a json object with `user`, `password` and `admin` (bool).
 * `POST /user/:name` - Update a user by `name`.
 * `DELETE /user/:name` - Delete a user by `name`.
+
+> The username is validated against the pattern defined in [.env](.env.example).  
+> The length must be between `3` and `32`, the password between `8` and `64`.

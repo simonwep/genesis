@@ -3,12 +3,14 @@ package routes
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/simonwep/genesis/core"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 func CreateUser(c *gin.Context) {
+	validate := validator.New()
 	var body core.User
 
 	if !isAsAdminAuthenticated(c) {
@@ -16,6 +18,8 @@ func CreateUser(c *gin.Context) {
 	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if !core.Config.AppUserPattern.MatchString(body.Name) {
+		c.Status(http.StatusBadRequest)
+	} else if err := validate.Struct(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if err := core.UpsertUser(body, false); err != nil {
 		if errors.Is(err, core.ErrUserAlreadyExists) {
@@ -30,12 +34,15 @@ func CreateUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
+	validate := validator.New()
 	name := c.Param("name")
 	var body core.User
 
 	if !isAsAdminAuthenticated(c) {
 		c.Status(http.StatusForbidden)
 	} else if err := c.ShouldBindJSON(&body); err != nil {
+		c.Status(http.StatusBadRequest)
+	} else if err := validate.Struct(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else if usr, err := core.GetUser(body.Name); err != nil {
 		c.Status(http.StatusInternalServerError)

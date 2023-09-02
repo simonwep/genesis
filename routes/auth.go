@@ -16,9 +16,8 @@ type loginBody struct {
 
 const cookieName = "gt"
 
-var validate = validator.New()
-
 func Login(c *gin.Context) {
+	validate := validator.New()
 	user := authenticateUser(c)
 
 	if user != nil {
