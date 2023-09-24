@@ -29,6 +29,11 @@ type User struct {
 	Password string `json:"password" validate:"required,gte=8,lte=64"`
 }
 
+type PartialUser struct {
+	Admin    *bool   `json:"admin,omitempty"`
+	Password *string `json:"password,omitempty" validate:"omitempty,gte=8,lte=64"`
+}
+
 type PublicUser struct {
 	Name  string `json:"name"`
 	Admin bool   `json:"admin"`
@@ -36,37 +41,71 @@ type PublicUser struct {
 
 var database *badger.DB
 
-func UpsertUser(user User, update bool) error {
+func CreateUser(user User) error {
 	txn := database.NewTransaction(true)
 	key := buildUserKey(user.Name)
 	defer txn.Discard()
 
-	item, err := txn.Get(key)
-	if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
-		return fmt.Errorf("failed to check if user already exists")
-	}
-
-	if update && item == nil {
-		return ErrUserNotFound
-	} else if !update && item != nil {
+	if existingUser, err := GetUser(user.Name); existingUser != nil {
 		return ErrUserAlreadyExists
+	} else if err != nil {
+		return fmt.Errorf("failed to check if user already exists")
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	data, err := json.Marshal(User{
+	} else if data, err := json.Marshal(User{
 		Name:     user.Name,
 		Admin:    user.Admin,
 		Password: string(hash),
-	})
-
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("failed to create user data: %w", err)
 	} else if err := txn.Set(key, data); err != nil {
 		return fmt.Errorf("failed to store user: %w", err)
+	} else if err := txn.Commit(); err != nil {
+		return fmt.Errorf("failed to commit data: %w", err)
+	}
+
+	return nil
+}
+
+func UpdateUser(name string, user PartialUser) error {
+	txn := database.NewTransaction(true)
+	key := buildUserKey(name)
+	defer txn.Discard()
+
+	existingUser, err := GetUser(name)
+	if err != nil {
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return ErrUserNotFound
+		}
+
+		return fmt.Errorf("failed to check if user exists")
+	}
+
+	if user.Password == nil {
+		user.Password = &existingUser.Password
+	} else {
+		if hash, err := hashPassword(*user.Password); err != nil {
+			return fmt.Errorf("failed to hash password: %w", err)
+		} else {
+			user.Password = &hash
+		}
+	}
+
+	if user.Admin == nil {
+		user.Admin = &existingUser.Admin
+	}
+
+	if data, err := json.Marshal(User{
+		Name:     name,
+		Admin:    *user.Admin,
+		Password: *user.Password,
+	}); err != nil {
+		return fmt.Errorf("failed to create user data: %w", err)
+	} else if err := txn.Set(key, data); err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
 	} else if err := txn.Commit(); err != nil {
 		return fmt.Errorf("failed to commit data: %w", err)
 	}
@@ -289,7 +328,7 @@ func initializeUsers() {
 			Logger.Error("failed to check for user", zap.Error(err))
 		} else if existingUser != nil {
 			Logger.Error("a user with this name already exists", zap.String("name", user.Name))
-		} else if err = UpsertUser(user, false); err != nil {
+		} else if err = CreateUser(user); err != nil {
 			Logger.Error("failed to create user", zap.Error(err))
 		} else {
 			Logger.Info("created new user", zap.String("name", user.Name), zap.Bool("admin", user.Admin))
@@ -329,6 +368,16 @@ func buildUserKey(name string) []byte {
 
 func buildUserDataKey(name, key string) []byte {
 	return []byte(dbDataPrefix + dbKeySeparator + name + dbKeySeparator + key)
+}
+
+func hashPassword(pwd string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+
+	if err != nil {
+		return "", err
+	} else {
+		return string(bytes), err
+	}
 }
 
 func init() {

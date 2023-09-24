@@ -9,7 +9,7 @@ import (
 
 type updateBody struct {
 	CurrentPassword string `json:"currentPassword"`
-	NewPassword     string `json:"newPassword"`
+	NewPassword     string `json:"newPassword" validate:"required,gte=8,lte=64"`
 }
 
 func UpdateAccount(c *gin.Context) {
@@ -30,15 +30,12 @@ func UpdateAccount(c *gin.Context) {
 		return
 	}
 
-	newUser := core.User{
-		Name:     user.Name,
-		Admin:    user.Admin,
-		Password: body.NewPassword,
-	}
-
-	if err := validate.Struct(&newUser); err != nil {
+	if err := validate.Struct(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if err := core.UpsertUser(newUser, true); err != nil {
+	} else if err := core.UpdateUser(user.Name, core.PartialUser{
+		Admin:    nil,
+		Password: &body.NewPassword,
+	}); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else {
 		c.Status(http.StatusOK)

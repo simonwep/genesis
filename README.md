@@ -76,8 +76,8 @@ The API is kept as simple as possible, there is nothing more than user, data and
 > These endpoints can only be used by admins!
 
 * `GET /user` - Fetch all users as `{ name: string, admin: boolean }[]`.
-* `POST /user` - Create a user, takes a json object with `user`, `password` and `admin` (bool).
-* `POST /user/:name` - Update a user by `name`.
+* `POST /user` - Create a user, takes a json object with `user`, `password` and `admin` (all mandatory, `admin` is a boolean).
+* `POST /user/:name` - Update a user by `name`, takes a json object with `password` and `admin` (both optional).
 * `DELETE /user/:name` - Delete a user by `name`.
 
 > The username is validated against the pattern defined in [.env](.env.example).  

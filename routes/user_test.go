@@ -127,24 +127,15 @@ func TestUpdateUser(t *testing.T) {
 	// invalid password
 	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"name\":\"foo\",\"password\":\"\",\"admin\":true}",
+		Body:  "{\"password\":\"\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusBadRequest, response.Code)
 		},
 	})
 
-	// would override other user
 	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
 		Token: token,
-		Body:  "{\"name\":\"bar\",\"password\":\"eJRG6gIU\",\"admin\":true}",
-		Handler: func(response *httptest.ResponseRecorder) {
-			assert.Equal(t, http.StatusConflict, response.Code)
-		},
-	})
-
-	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
-		Token: token,
-		Body:  "{\"name\":\"foo\",\"password\":\"wK8iVkRO\",\"admin\":true}",
+		Body:  "{\"password\":\"wK8iVkRO\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},
@@ -159,6 +150,40 @@ func TestUpdateUser(t *testing.T) {
 
 	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
 		Body: "{\"user\":\"foo\", \"password\":\"wK8iVkRO\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+}
+
+func TestPartialUpdate(t *testing.T) {
+	token := loginAdmin(t)
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\":\"foo\", \"password\":\"hgEiPCZP\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
+		Token: token,
+		Body:  "{\"admin\":true}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\":\"foo\", \"password\":\"hgEiPCZP\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
+		Token: token,
+		Body:  "{\"password\":\"JNYwKmzh\",\"admin\":true}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},

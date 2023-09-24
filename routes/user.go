@@ -21,7 +21,7 @@ func CreateUser(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	} else if err := validate.Struct(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if err := core.UpsertUser(body, false); err != nil {
+	} else if err := core.CreateUser(body); err != nil {
 		if errors.Is(err, core.ErrUserAlreadyExists) {
 			c.Status(http.StatusConflict)
 		} else {
@@ -36,7 +36,7 @@ func CreateUser(c *gin.Context) {
 func UpdateUser(c *gin.Context) {
 	validate := validator.New()
 	name := c.Param("name")
-	var body core.User
+	var body core.PartialUser
 
 	if !isAsAdminAuthenticated(c) {
 		c.Status(http.StatusForbidden)
@@ -44,12 +44,10 @@ func UpdateUser(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 	} else if err := validate.Struct(&body); err != nil {
 		c.Status(http.StatusBadRequest)
-	} else if usr, err := core.GetUser(body.Name); err != nil {
+	} else if _, err := core.GetUser(name); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to retrieve user", zap.Error(err))
-	} else if name != body.Name && usr != nil {
-		c.Status(http.StatusConflict)
-	} else if err := core.UpsertUser(body, true); err != nil {
+	} else if err := core.UpdateUser(name, body); err != nil {
 		c.Status(http.StatusBadRequest)
 	} else {
 		c.Status(http.StatusOK)
