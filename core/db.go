@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	ErrUserAlreadyExists = errors.New("A user with this name already exists")
-	ErrUserNotFound      = errors.New("A user with this name already exists")
+	ErrUserAlreadyExists = errors.New("a user with this name already exists")
+	ErrUserNotFound      = errors.New("user not found")
 )
 
 type User struct {
@@ -327,8 +327,10 @@ func initializeUsers() {
 		if existingUser, err := GetUser(user.Name); err != nil {
 			Logger.Error("failed to check for user", zap.Error(err))
 		} else if existingUser != nil {
-			Logger.Error("a user with this name already exists", zap.String("name", user.Name))
-		} else if err = CreateUser(user); err != nil {
+			continue
+		}
+
+		if err := CreateUser(user); err != nil {
 			Logger.Error("failed to create user", zap.Error(err))
 		} else {
 			Logger.Info("created new user", zap.String("name", user.Name), zap.Bool("admin", user.Admin))
