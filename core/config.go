@@ -29,7 +29,7 @@ type AppConfig struct {
 
 var Config = func() AppConfig {
 	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
-		Logger.Warn("failed to retrieve data", zap.Error(err))
+		Logger.Info(".env file not found", zap.Error(err))
 	}
 
 	return AppConfig{
