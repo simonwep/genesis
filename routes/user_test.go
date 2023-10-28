@@ -47,9 +47,9 @@ func TestRetrieveUsers(t *testing.T) {
 	tryAuthorizedGet("/user", AuthorizedConfig{
 		Token: token,
 		Handler: func(response *httptest.ResponseRecorder) {
-			bar := "{\"name\":\"bar\",\"admin\":true}"
+			baz := "{\"name\":\"baz\",\"admin\":false}"
 			foo := "{\"name\":\"foo\",\"admin\":false}"
-			assert.Equal(t, "["+bar+","+foo+"]", response.Body.String())
+			assert.Equal(t, "["+baz+","+foo+"]", response.Body.String())
 		},
 	})
 }
@@ -152,6 +152,18 @@ func TestUpdateUser(t *testing.T) {
 		Body: "{\"user\":\"foo\", \"password\":\"wK8iVkRO\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+}
+
+func TestUpdateItself(t *testing.T) {
+	token := loginAdmin(t)
+
+	tryAuthorizedPost("/user/bar", AuthorizedBodyConfig{
+		Token: token,
+		Body:  "{\"password\":\"wK8iVkRO\",\"admin\":true}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusForbidden, response.Code)
 		},
 	})
 }

@@ -34,11 +34,14 @@ func CreateUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
+	user := authenticateUser(c)
 	validate := validator.New()
 	name := c.Param("name")
 	var body core.PartialUser
 
-	if !isAsAdminAuthenticated(c) {
+	if user == nil || !user.Admin {
+		c.Status(http.StatusForbidden)
+	} else if name == user.Name {
 		c.Status(http.StatusForbidden)
 	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.Status(http.StatusBadRequest)
@@ -70,9 +73,11 @@ func DeleteUser(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	if !isAsAdminAuthenticated(c) {
+	user := authenticateUser(c)
+
+	if user == nil || !user.Admin {
 		c.Status(http.StatusForbidden)
-	} else if list, err := core.GetUsers(); err != nil {
+	} else if list, err := core.GetUsers(user.Name); err != nil {
 		c.Status(http.StatusInternalServerError)
 		core.Logger.Error("failed to retrieve users", zap.Error(err))
 	} else {

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -147,19 +148,27 @@ func GetUser(name string) (*User, error) {
 	})
 }
 
-func GetUsers() ([]*PublicUser, error) {
+func GetUsers(skip string) ([]*PublicUser, error) {
 	txn := database.NewTransaction(true)
 	defer txn.Discard()
 
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
 
+	skipKey := buildUserKey(skip)
 	users := make([]*PublicUser, 0)
 	prefix := buildUserKey("")
 
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		item := it.Item()
+
+		// Skip the user we want to skip
+		if bytes.Equal(skipKey, item.Key()) {
+			continue
+		}
+
 		var user PublicUser
-		err := it.Item().Value(func(val []byte) error {
+		err := item.Value(func(val []byte) error {
 			return json.Unmarshal(val, &user)
 		})
 
@@ -373,12 +382,12 @@ func buildUserDataKey(name, key string) []byte {
 }
 
 func hashPassword(pwd string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 
 	if err != nil {
 		return "", err
 	} else {
-		return string(bytes), err
+		return string(hashed), err
 	}
 }
 
