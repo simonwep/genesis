@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"testing"
 	"time"
 )
 
@@ -28,7 +29,13 @@ type AppConfig struct {
 }
 
 var Config = func() AppConfig {
-	if err := godotenv.Load(path.Join(currentDir(), ".env")); err != nil {
+	envFile := path.Join(currentDir(), ".env")
+
+	if testing.Testing() {
+		envFile = path.Join(currentDir(), ".env.test")
+	}
+
+	if err := godotenv.Load(envFile); err != nil {
 		Logger.Info(".env file not found", zap.Error(err))
 	}
 

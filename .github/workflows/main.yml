@@ -28,9 +28,6 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
-      - name: Set up env
-        run: cp .env.test .env
-
       - name: Build
         run: go build -v ./...
 
