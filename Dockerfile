@@ -1,4 +1,7 @@
-FROM golang:1.20-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS build
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -6,7 +9,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build
 
 FROM alpine:3.18
 

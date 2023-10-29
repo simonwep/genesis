@@ -25,6 +25,7 @@ It also requires you to specify a list of known-users, simplifying it greatly as
 ### Usage
 
 First, create a [.env](.env.example) and specify the initial usernames and passwords for access.
+Make sure to fill out `GENESIS_JWT_SECRET` with a secure, random string, for that you can use `openssl rand -hex 32`.
 You can specify the remaining values, but the defaults are good for medium-sized projects such as [ocular](https://github.com/Simonwep/ocular).
 
 Second, start the server via `go run .`. That's it.
@@ -34,15 +35,13 @@ The `json` is pre-processed by the [minify](https://github.com/tdewolff/minify) 
 
 #### Using docker
 
-This API can also be deployed by using docker.
-For this you can build and run the container using the following command:
+You can run genesis using [docker](https://www.docker.com/products/docker-desktop/) by using pre-build images:
 
 ```sh
-docker build -t genesis .
-docker run -p 8088:8080 -v "$(pwd)/.data:/app/.data" --env-file .env genesis
+docker run -p 8080:8080 -v "$(pwd)/.data:/app/.data" --env-file .env ghcr.io/simonwep/genesis:latest
 ```
 
-Genesis should then be accessible under port `8088`.
+Genesis should then be accessible under port `8080`.
 
 ### API
 
