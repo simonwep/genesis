@@ -68,3 +68,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            GENESIS_BUILD_VERSION=${{ github.ref_name }}
+            GENESIS_BUILD_COMMIT=${{ github.sha }}
+            GENESIS_BUILD_DATE=${{ github.event.head_commit.timestamp }}

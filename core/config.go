@@ -18,6 +18,9 @@ type AppConfig struct {
 	DbPath           string
 	JWTSecret        []byte
 	JWTExpiration    time.Duration
+	AppBuildVersion  string
+	AppBuildDate     string
+	AppBuildCommit   string
 	AppGinMode       string
 	AppLogMode       string
 	AppPort          string
@@ -36,13 +39,16 @@ var Config = func() AppConfig {
 	}
 
 	if err := godotenv.Load(envFile); err != nil {
-		Logger.Info(".env file not found", zap.Error(err))
+		Logger.Info(".env file skipped")
 	}
 
-	return AppConfig{
+	config := AppConfig{
 		DbPath:           resolvePath(os.Getenv("GENESIS_DB_PATH")),
 		JWTSecret:        []byte(os.Getenv("GENESIS_JWT_SECRET")),
 		JWTExpiration:    time.Duration(parseInt(os.Getenv("GENESIS_JWT_TOKEN_EXPIRATION"))) * time.Minute,
+		AppBuildVersion:  os.Getenv("GENESIS_BUILD_VERSION"),
+		AppBuildDate:     os.Getenv("GENESIS_BUILD_DATE"),
+		AppBuildCommit:   os.Getenv("GENESIS_BUILD_COMMIT"),
 		AppGinMode:       os.Getenv("GENESIS_GIN_MODE"),
 		AppLogMode:       os.Getenv("GENESIS_LOG_MODE"),
 		AppPort:          os.Getenv("GENESIS_PORT"),
@@ -52,6 +58,14 @@ var Config = func() AppConfig {
 		AppDataMaxSize:   parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
 		AppKeysPerUser:   parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
 	}
+
+	Logger.Info("build info",
+		zap.String("version", config.AppBuildVersion),
+		zap.String("date", config.AppBuildDate),
+		zap.String("commit", config.AppBuildCommit),
+	)
+
+	return config
 }()
 
 func parseInitialUserList(raw string) []User {
