@@ -34,5 +34,8 @@ func SetupRoutes() *gin.Engine {
 	router.GET("/data/:key", DataByKey)
 	router.GET("/data", Data)
 
+	// Heal check endpoints
+	router.GET("/health", Health)
+
 	return router
 }
