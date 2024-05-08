@@ -21,12 +21,12 @@ WORKDIR /app
 
 COPY --from=build /app/genesis /app
 
-EXPOSE 8080
+EXPOSE ${GENESIS_PORT}
 
 ENV GENESIS_BUILD_VERSION=${GENESIS_BUILD_VERSION}
 ENV GENESIS_BUILD_DATE=${GENESIS_BUILD_DATE}
 ENV GENESIS_BUILD_COMMIT=${GENESIS_BUILD_COMMIT}
 
-HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:${GENESIS_PORT}/health || exit 1
 
 CMD ["./genesis"]
