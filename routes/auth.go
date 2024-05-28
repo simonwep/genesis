@@ -53,7 +53,7 @@ func Login(c *gin.Context) {
 			Value:    refreshToken,
 			Path:     "/",
 			Expires:  time.Now().Add(core.Config.JWTExpiration),
-			Secure:   true,
+			Secure:   !core.Config.JWTCookieAllowHTTP,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
 		})
