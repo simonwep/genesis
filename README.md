@@ -41,6 +41,9 @@ docker run -p 8080:8080 -v "$(pwd)/.data:/app/.data" --env-file .env ghcr.io/sim
 
 Genesis should then be accessible under port `8080`.
 
+> [!NOTE]
+> You can specify the base-url via the env variable `GENESIS_BASE_URL`.
+
 ### API
 
 The API is kept as simple as possible, there is nothing more than user, data and account management.

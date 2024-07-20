@@ -16,6 +16,7 @@ import (
 
 type AppConfig struct {
 	DbPath             string
+	BaseUrl            string
 	JWTSecret          []byte
 	JWTExpiration      time.Duration
 	JWTCookieAllowHTTP bool
@@ -45,6 +46,7 @@ var Config = func() AppConfig {
 
 	config := AppConfig{
 		DbPath:             resolvePath(os.Getenv("GENESIS_DB_PATH")),
+		BaseUrl:            os.Getenv("GENESIS_BASE_URL"),
 		JWTSecret:          []byte(os.Getenv("GENESIS_JWT_SECRET")),
 		JWTExpiration:      time.Duration(parseInt(os.Getenv("GENESIS_JWT_TOKEN_EXPIRATION"))) * time.Minute,
 		JWTCookieAllowHTTP: os.Getenv("GENESIS_JWT_COOKIE_ALLOW_HTTP") == "true",

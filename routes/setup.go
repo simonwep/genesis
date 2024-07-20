@@ -12,10 +12,13 @@ func SetupRoutes() *gin.Engine {
 	gin.SetMode(core.Config.AppGinMode)
 
 	// Create router
-	router := gin.New()
+	root := gin.New()
 
 	// Middleware
-	router.Use(gin.Recovery())
+	root.Use(gin.Recovery())
+
+	// Wrap routes under common path
+	router := root.Group(core.Config.BaseUrl)
 
 	// Auth and account endpoints
 	router.POST("/login", Login)
@@ -37,5 +40,5 @@ func SetupRoutes() *gin.Engine {
 	// Heal check endpoints
 	router.GET("/health", Health)
 
-	return router
+	return root
 }
