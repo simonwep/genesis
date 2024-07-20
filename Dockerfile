@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS build
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build
 
-FROM alpine:3.18
+FROM alpine:3.20
 
 ARG GENESIS_BUILD_VERSION
 ARG GENESIS_BUILD_DATE
