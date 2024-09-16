@@ -11,9 +11,9 @@ import (
 func main() {
 	app := &cli.App{
 		Name:  "genesis",
-		Usage: "A tinsy tiny server for all your json blob needs",
+		Usage: "A tiny server for all your json needs",
 		Authors: []*cli.Author{
-			{Name: "Simon Reinisch", Email: "simon@reinisch.io"},
+			{Name: "Simon Reinisch", Email: "contact@reinisch.io"},
 		},
 		Commands: []*cli.Command{
 			{
@@ -27,19 +27,21 @@ func main() {
 				Subcommands: []*cli.Command{
 					{
 						Name:      "ls",
+						Aliases:   []string{"list"},
 						Usage:     "Lists all users",
 						UsageText: "genesis user ls",
 						Action:    commands.ListUsers,
 					},
 					{
 						Name:      "rm",
+						Aliases:   []string{"remove"},
 						Usage:     "Removes a user",
 						UsageText: "genesis user rm [username]",
 						Action:    commands.RemoveUser,
 					},
 					{
 						Name:      "add",
-						Usage:     "Adds a user",
+						Usage:     "Adds a user, add ! at the end of the username to make the user an admin",
 						UsageText: "genesis user add [username] [password]",
 						Action:    commands.AddUser,
 					},

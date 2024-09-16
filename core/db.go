@@ -114,31 +114,6 @@ func UpdateUser(name string, user PartialUser) error {
 	return nil
 }
 
-func DeleteUser(name string) error {
-	txn := database.NewTransaction(true)
-	it := txn.NewIterator(badger.DefaultIteratorOptions)
-
-	// Delete data
-	prefix := []byte(DbUserDataPrefix + name + ":")
-	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-		if err := txn.Delete(it.Item().Key()); err != nil {
-			it.Close()
-			return err
-		}
-	}
-
-	it.Close()
-
-	// Delete user
-	if err := txn.Delete([]byte(DbUserDataPrefix + name)); err != nil {
-		return err
-	} else if err := txn.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func AuthenticateUser(name string, password string) (*User, error) {
 	user, err := GetUser(name)
 
@@ -191,6 +166,34 @@ func GetUsers(skip string) ([]*PublicUser, error) {
 		if bytes.Equal(skipKey, item.Key()) {
 			continue
 		}
+
+		var user PublicUser
+		err := item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &user)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, &user)
+	}
+
+	return users, nil
+}
+
+func GetAllUsers() ([]*PublicUser, error) {
+	txn := database.NewTransaction(true)
+	defer txn.Discard()
+
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer it.Close()
+
+	users := make([]*PublicUser, 0)
+	prefix := buildUserKey("")
+
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		item := it.Item()
 
 		var user PublicUser
 		err := item.Value(func(val []byte) error {
@@ -389,9 +392,9 @@ func printDebugInformation() {
 		results[key[0]]++
 	}
 
-	Logger.Info("users", zap.Int("count", results[dbUserPrefix]))
-	Logger.Info("datasets", zap.Int("count", results[dbDataPrefix]))
-	Logger.Info("expired keys", zap.Int("count", results[dbExpiredTokenPrefix]))
+	Logger.Debug("users", zap.Int("count", results[dbUserPrefix]))
+	Logger.Debug("datasets", zap.Int("count", results[dbDataPrefix]))
+	Logger.Debug("expired keys", zap.Int("count", results[dbExpiredTokenPrefix]))
 }
 
 func buildExpiredKey(key string) []byte {
