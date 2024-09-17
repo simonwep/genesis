@@ -2,7 +2,7 @@
 
 <div align="center">
   <h3>Genesis</h3>
-  <h4>A generic json api for small, private frontend apps (WIP)</h4>
+  <h4>A generic JSON api for small, private frontend apps (WIP)</h4>
 </div>
 
 <div align="center">
@@ -18,7 +18,7 @@
 
 ### Summary
 
-This project is designed specifically for small, personal projects requiring a straightforward, simple storage API that you can host yourself including simplified user management.
+This project is designed specifically for small, personal projects requiring a straightforward, simple storage API that you can host yourself, including simplified user management.
 
 ### Usage
 
@@ -46,19 +46,19 @@ Genesis should then be accessible under port `8080`.
 
 ### API
 
-The API is kept as simple as possible, there is nothing more than user, data and account management.
+The API is kept as simple as possible; there is nothing more than user, data, and account management.
 
 #### Authentication and account
 
 * `POST /login` - Authenticates a user.
-  - Takes either a `user` and `password` as json object and returns the user-data and a session cookie or, if a session-cookie exists, the current user.
+  - Takes either a `user` and `password` as JSON object and returns the user-data and a session cookie or, if a session-cookie exists, the current user.
   - Returns `401` the password is invalid or the user doesn't exist.
 * `POST /logout` - Invalidates the current refresh token and logs out a user.
 * `POST /account/update`
-  - Takes a `newPassword` and `currentPassword` as json object.
+  - Takes a `newPassword` and `currentPassword` as JSON object.
   - Returns `200` if the password was successfully updated, otherwise `400`.
 
-> The JWT token is returned as strict same-site, secure and http-only cookie!  
+> The JWT token is returned as a strict same-site, secure and http-only cookie!  
 > When changing the password, the new password must fulfill the same requirements for adding a new user.
 
 #### Data endpoints
@@ -69,15 +69,15 @@ The API is kept as simple as possible, there is nothing more than user, data and
 * `DELETE /data/:key` - Removes the data for `key`, always returns `200`, even if `key` doesn't exist.
 
 > Validation parameters for those endpoints are defined in [.env](.env.example).  
-> This includes a key-pattern, the max amount per user and a size-limit.
+> This includes a key-pattern, the max amount per user, and a size-limit.
 
 #### User management
 
-> These endpoints can only be used by admins!
+> Admins can only use these endpoints!
 
 * `GET /user` - Fetch all users as `{ name: string, admin: boolean }[]`.
-* `POST /user` - Create a user, takes a json object with `user`, `password` and `admin` (all mandatory, `admin` is a boolean).
-* `POST /user/:name` - Update a user by `name`, takes a json object with `password` and `admin` (both optional).
+* `POST /user` - Create a user, takes a JSON object with `user`, `password` and `admin` (all mandatory, `admin` is a boolean).
+* `POST /user/:name` - Update a user by `name`, takes a JSON object with `password` and `admin` (both optional).
 * `DELETE /user/:name` - Delete a user by `name`.
 
 > The username is validated against the pattern defined in [.env](.env.example).  
