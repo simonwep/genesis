@@ -29,4 +29,4 @@ ENV GENESIS_BUILD_COMMIT=${GENESIS_BUILD_COMMIT}
 
 HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:${GENESIS_PORT}/health || exit 1
 
-CMD ["./genesis start"]
+ENTRYPOINT ["./genesis"]

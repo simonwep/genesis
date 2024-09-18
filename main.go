@@ -18,11 +18,11 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:   "start",
-				Usage:  "Start the api",
+				Usage:  "Start the server",
 				Action: commands.Start,
 			},
 			{
-				Name:  "user",
+				Name:  "users",
 				Usage: "Manage users",
 				Subcommands: []*cli.Command{
 					{

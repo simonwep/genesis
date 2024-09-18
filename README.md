@@ -26,8 +26,9 @@ First, create a [.env](.env.example) and specify the initial usernames and passw
 Make sure to fill out `GENESIS_JWT_SECRET` with a secure, random string, for that you can use `openssl rand -hex 32`.
 You can specify the remaining values, but the defaults are good for medium-sized projects such as [ocular](https://github.com/Simonwep/ocular).
 
-Second, start the server via `go run .`. That's it.
+Second, start the server via `go run . start` - That's it.
 Head to the [api](#api) documentation to see how to use it.
+Use `go run . help` to see all available commands.
 
 The `json` is pre-processed by the [minify](https://github.com/tdewolff/minify) package to minimize and validate it.
 
@@ -36,13 +37,22 @@ The `json` is pre-processed by the [minify](https://github.com/tdewolff/minify) 
 You can run genesis using [docker](https://www.docker.com/products/docker-desktop/) by using pre-build images:
 
 ```sh
-docker run -p 8080:8080 -v "$(pwd)/.data:/app/.data" --env-file .env ghcr.io/simonwep/genesis:latest
+docker run -p 8080:8080 -v "$(pwd)/.data:/app/.data" --env-file .env ghcr.io/simonwep/genesis:latest start
 ```
 
 Genesis should then be accessible under port `8080`.
 
 > [!NOTE]
 > You can specify the base-url via the env variable `GENESIS_BASE_URL`.
+
+### CLI
+
+Genesis comes with a CLI to manage users.
+You can access it by running `go run . users help` or via docker using the following command:
+
+```sh
+docker run --rm -v "$(pwd)/.data:/app/.data" --env-file .env ghcr.io/simonwep/genesis:latest help
+```
 
 ### API
 
