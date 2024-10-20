@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"os"
 	"path"
@@ -10,7 +9,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"testing"
 	"time"
 )
 
@@ -24,7 +22,6 @@ type AppConfig struct {
 	AppBuildDate       string
 	AppBuildCommit     string
 	AppGinMode         string
-	AppLogMode         string
 	AppPort            string
 	AppUsersToCreate   []User
 	AppUserPattern     *regexp.Regexp
@@ -34,16 +31,6 @@ type AppConfig struct {
 }
 
 var Config = func() AppConfig {
-	envFile := path.Join(currentDir(), ".env")
-
-	if testing.Testing() {
-		envFile = path.Join(currentDir(), ".env.test")
-	}
-
-	if err := godotenv.Load(envFile); err != nil {
-		Logger.Debug(".env file skipped")
-	}
-
 	config := AppConfig{
 		DbPath:             resolvePath(os.Getenv("GENESIS_DB_PATH")),
 		BaseUrl:            os.Getenv("GENESIS_BASE_URL"),
@@ -54,7 +41,6 @@ var Config = func() AppConfig {
 		AppBuildDate:       os.Getenv("GENESIS_BUILD_DATE"),
 		AppBuildCommit:     os.Getenv("GENESIS_BUILD_COMMIT"),
 		AppGinMode:         os.Getenv("GENESIS_GIN_MODE"),
-		AppLogMode:         os.Getenv("GENESIS_LOG_MODE"),
 		AppPort:            os.Getenv("GENESIS_PORT"),
 		AppUsersToCreate:   parseInitialUserList(os.Getenv("GENESIS_CREATE_USERS")),
 		AppUserPattern:     regexp.MustCompile(os.Getenv("GENESIS_USERNAME_PATTERN")),
