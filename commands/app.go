@@ -8,6 +8,7 @@ import (
 
 func Start(*cli.Context) error {
 	router := routes.SetupRoutes()
+	core.InitializeUsers()
 
 	if err := router.SetTrustedProxies(nil); err != nil {
 		return err

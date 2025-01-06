@@ -356,10 +356,10 @@ func ResetDatabase() {
 		Logger.Fatal("failed to drop database", zap.Error(err))
 	}
 
-	initializeUsers()
+	InitializeUsers()
 }
 
-func initializeUsers() {
+func InitializeUsers() {
 	for _, user := range Config.AppUsersToCreate {
 		if existingUser, err := GetUser(user.Name); err != nil {
 			Logger.Error("failed to check for user", zap.Error(err))
@@ -429,6 +429,5 @@ func init() {
 		database = db
 	}
 
-	initializeUsers()
 	printDebugInformation()
 }
