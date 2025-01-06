@@ -31,21 +31,21 @@ func Login(c *gin.Context) {
 
 	var body loginBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
 		return
 	} else if err := validate.Struct(&body); err != nil {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "validation of json failed, must contain user and password"})
 		return
 	}
 
 	user, err := core.AuthenticateUser(body.User, body.Password)
 	if user == nil || err != nil {
-		c.Status(http.StatusUnauthorized)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "username or password incorrect"})
 		return
 	}
 
 	if refreshToken, err := core.CreateAuthToken(user); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create auth token"})
 		core.Logger.Error("failed to create auth token", zap.Error(err))
 	} else {
 		http.SetCookie(c.Writer, &http.Cookie{
@@ -69,11 +69,11 @@ func Logout(c *gin.Context) {
 	refreshToken, err := c.Cookie(cookieName)
 
 	if err != nil || len(refreshToken) == 0 {
-		c.Status(http.StatusUnauthorized)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token not found"})
 	} else if parsed, err := core.ParseAuthToken(refreshToken); err != nil || parsed == nil {
-		c.Status(http.StatusUnauthorized)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
 	} else if err := core.StoreInvalidatedToken(parsed.ID, parsed.ExpiresAt.Sub(time.Now())); err != nil {
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to store invalidated token"})
 	} else {
 		http.SetCookie(c.Writer, &http.Cookie{
 			Name:     cookieName,

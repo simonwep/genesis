@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+type UnauthorizedConfig struct {
+	Handler func(*httptest.ResponseRecorder)
+}
+
 type UnauthorizedBodyConfig struct {
 	Body    string
 	Handler func(*httptest.ResponseRecorder)
@@ -39,6 +43,13 @@ func tryRequest(url, method, body string, config AuthorizedConfig) {
 
 func tryUnauthorizedPost(url string, config UnauthorizedBodyConfig) {
 	tryRequest(url, "POST", config.Body, AuthorizedConfig{
+		Token:   "",
+		Handler: config.Handler,
+	})
+}
+
+func tryUnauthorizedGet(url string, config UnauthorizedConfig) {
+	tryRequest(url, "GET", "", AuthorizedConfig{
 		Token:   "",
 		Handler: config.Handler,
 	})

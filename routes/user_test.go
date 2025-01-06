@@ -186,6 +186,14 @@ func TestPartialUpdate(t *testing.T) {
 		},
 	})
 
+	tryAuthorizedPost("/user/foo", AuthorizedBodyConfig{
+		Token: token,
+		Body:  "{\"admin\":true",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusBadRequest, response.Code)
+		},
+	})
+
 	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
 		Body: "{\"user\":\"foo\", \"password\":\"hgEiPCZP\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
