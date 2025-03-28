@@ -8,7 +8,10 @@ import (
 	"github.com/dgraph-io/badger/v4"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -423,11 +426,48 @@ func init() {
 	options := badger.DefaultOptions(Config.DbPath)
 	options.Logger = nil
 
+	// Adjust options for a smaller database
+	options.CompactL0OnClose = true
+	options.ValueLogFileSize = 64 << 20 // 64MB
+	options.NumLevelZeroTables = 1
+	options.NumLevelZeroTablesStall = 2
+
 	if db, err := badger.Open(options); err != nil {
 		Logger.Fatal("failed to open database", zap.Error(err))
 	} else {
 		database = db
 	}
+
+	// Shutdown database gracefully
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+
+	go func() {
+		sig := <-sigs
+		Logger.Info("received signal, closing database", zap.String("signal", sig.String()))
+
+		if err := database.Close(); err != nil {
+			Logger.Error("failed to close database", zap.Error(err))
+		}
+
+		os.Exit(0)
+	}()
+
+	// Run garbage collector once an hour
+	go func() {
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+
+		for {
+			<-ticker.C
+			err := database.RunValueLogGC(0.5)
+			if errors.Is(err, badger.ErrNoRewrite) {
+				continue
+			} else if err != nil {
+				Logger.Error("failed to run value log GC", zap.Error(err))
+			}
+		}
+	}()
 
 	printDebugInformation()
 }
