@@ -16,6 +16,18 @@ type loginBody struct {
 
 const cookieName = "gt"
 
+// Login godoc
+// @Summary      Authenticate user
+// @Description  Login with username and password, returns user info and sets JWT cookie. If already authenticated (valid cookie), returns current user info.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials body LoginRequest false "Login credentials (optional if cookie present)"
+// @Success      200 {object} core.PublicUser "User authenticated successfully"
+// @Failure      400 {object} ErrorResponse "Invalid JSON or validation failed"
+// @Failure      401 {object} ErrorResponse "Invalid credentials"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /login [post]
 func Login(c *gin.Context) {
 	validate := validator.New()
 	user := authenticateUser(c)
@@ -65,6 +77,16 @@ func Login(c *gin.Context) {
 	}
 }
 
+// Logout godoc
+// @Summary      Logout user
+// @Description  Invalidates the current JWT token and clears the authentication cookie
+// @Tags         auth
+// @Produce      json
+// @Success      200 "Logout successful"
+// @Failure      401 {object} ErrorResponse "No refresh token found or invalid token"
+// @Failure      500 {object} ErrorResponse "Failed to invalidate token"
+// @Security     CookieAuth
+// @Router       /logout [post]
 func Logout(c *gin.Context) {
 	refreshToken, err := c.Cookie(cookieName)
 

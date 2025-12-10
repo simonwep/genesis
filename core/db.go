@@ -27,20 +27,26 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 )
 
+// User represents a user in the system
+// @Description User with credentials
 type User struct {
-	Name     string `json:"name" validate:"required,gte=3,lte=32"`
-	Admin    bool   `json:"admin"`
-	Password string `json:"password" validate:"required,gte=8,lte=64"`
+	Name     string `json:"name" validate:"required,gte=3,lte=32" example:"admin"`
+	Admin    bool   `json:"admin" example:"true"`
+	Password string `json:"password" validate:"required,gte=8,lte=64" example:"password123"`
 }
 
+// PartialUser represents partial user data for updates
+// @Description Partial user data (both fields optional)
 type PartialUser struct {
-	Admin    *bool   `json:"admin,omitempty"`
-	Password *string `json:"password,omitempty" validate:"omitempty,gte=8,lte=64"`
+	Admin    *bool   `json:"admin,omitempty" example:"false"`
+	Password *string `json:"password,omitempty" validate:"omitempty,gte=8,lte=64" example:"newPassword123"`
 }
 
+// PublicUser represents user information without sensitive data
+// @Description User information returned to clients (no password)
 type PublicUser struct {
-	Name  string `json:"name"`
-	Admin bool   `json:"admin"`
+	Name  string `json:"name" example:"admin"`
+	Admin bool   `json:"admin" example:"true"`
 }
 
 var database *badger.DB

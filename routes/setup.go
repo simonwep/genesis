@@ -4,7 +4,29 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genesis/core"
 	"github.com/simonwep/genesis/middleware"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title           Genesis API
+// @version         1.0
+// @description     A generic JSON API for small, private frontend apps with user management and data storage
+// @description     Authentication uses HTTP-only cookies with JWT tokens (cookie name: 'gt')
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    https://github.com/simonwep/genesis
+
+// @license.name  MIT
+// @license.url   https://github.com/simonwep/genesis/blob/main/LICENSE
+
+// @host      localhost:8080
+// @BasePath  /
+
+// @securityDefinitions.apikey CookieAuth
+// @in cookie
+// @name gt
+// @description JWT token stored in HTTP-only cookie
 
 func SetupRoutes() *gin.Engine {
 
@@ -39,6 +61,11 @@ func SetupRoutes() *gin.Engine {
 
 	// Heal check endpoints
 	router.GET("/health", Health)
+
+	// Swagger documentation
+	if core.Config.SwaggerEnabled {
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	return root
 }

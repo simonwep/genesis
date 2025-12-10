@@ -54,6 +54,46 @@ You can access it by running `go run . users help` or via docker using the follo
 docker run --rm -v "$(pwd)/.data:/app/.data" --env-file .env ghcr.io/simonwep/genesis:latest help
 ```
 
+### API Documentation
+
+Genesis includes interactive API documentation powered by Swagger/OpenAPI 3.0.
+
+#### Accessing Swagger UI
+
+Once the server is running, you can access the interactive API documentation at:
+
+```
+http://localhost:8080/swagger/index.html
+```
+
+The Swagger UI provides:
+- Complete endpoint documentation for all 11 API endpoints
+- Request/response schemas with examples
+- Interactive testing capabilities
+- Authentication information (cookie-based JWT)
+
+#### Generating Swagger Documentation
+
+If you modify the API or add new endpoints, regenerate the Swagger documentation:
+
+```sh
+# Install swag CLI tool (one-time setup)
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Generate documentation
+swag init -g routes/setup.go --output docs
+```
+
+#### Disabling Swagger UI
+
+To disable Swagger UI in production, set the environment variable:
+
+```sh
+GENESIS_SWAGGER_ENABLED=false
+```
+
+By default, Swagger is enabled.
+
 ### API
 
 The API is kept as simple as possible; there is nothing more than user, data, and account management.

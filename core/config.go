@@ -27,6 +27,7 @@ type AppConfig struct {
 	AppKeyPattern      *regexp.Regexp
 	AppDataMaxSize     int64
 	AppKeysPerUser     int64
+	SwaggerEnabled     bool
 }
 
 var Config = func() AppConfig {
@@ -46,6 +47,7 @@ var Config = func() AppConfig {
 		AppKeyPattern:      regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
 		AppDataMaxSize:     parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
 		AppKeysPerUser:     parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
+		SwaggerEnabled:     os.Getenv("GENESIS_SWAGGER_ENABLED") != "false", // Enabled by default
 	}
 
 	Logger.Debug("build info",

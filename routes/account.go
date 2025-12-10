@@ -12,6 +12,18 @@ type updateBody struct {
 	NewPassword     string `json:"newPassword" validate:"required,gte=8,lte=64"`
 }
 
+// UpdateAccount godoc
+// @Summary      Update account password
+// @Description  Update the password for the currently authenticated user
+// @Tags         account
+// @Accept       json
+// @Produce      json
+// @Param        request body UpdatePasswordRequest true "Password update request"
+// @Success      200 "Password updated successfully"
+// @Failure      400 {object} ErrorResponse "Invalid JSON or validation failed"
+// @Failure      401 {object} ErrorResponse "Unauthorized or current password incorrect"
+// @Security     CookieAuth
+// @Router       /account/update [post]
 func UpdateAccount(c *gin.Context) {
 	validate := validator.New()
 	user := authenticateUser(c)

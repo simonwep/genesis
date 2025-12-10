@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "github.com/simonwep/genesis/docs" // Import generated swagger docs
 	"github.com/simonwep/genesis/commands"
 	"github.com/simonwep/genesis/core"
 	"github.com/urfave/cli/v2"

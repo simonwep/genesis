@@ -9,6 +9,20 @@ import (
 	"net/http"
 )
 
+// CreateUser godoc
+// @Summary      Create a new user
+// @Description  Create a new user (admin only)
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        user body CreateUserRequest true "User details"
+// @Success      201 {object} SuccessResponse "User created successfully"
+// @Failure      400 {object} ErrorResponse "Invalid JSON or validation failed"
+// @Failure      403 {object} ErrorResponse "Forbidden - admin only"
+// @Failure      409 {object} ErrorResponse "User already exists"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     CookieAuth
+// @Router       /user [post]
 func CreateUser(c *gin.Context) {
 	validate := validator.New()
 	var body core.User
@@ -33,6 +47,20 @@ func CreateUser(c *gin.Context) {
 	}
 }
 
+// UpdateUser godoc
+// @Summary      Update a user
+// @Description  Update user details by name (admin only, cannot update self)
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        name path string true "Username"
+// @Param        user body UpdateUserRequest true "User update details"
+// @Success      200 "User updated successfully"
+// @Failure      400 {object} ErrorResponse "Invalid JSON or validation failed"
+// @Failure      403 {object} ErrorResponse "Forbidden - admin only or cannot update self"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     CookieAuth
+// @Router       /user/{name} [post]
 func UpdateUser(c *gin.Context) {
 	user := authenticateUser(c)
 	validate := validator.New()
@@ -57,6 +85,17 @@ func UpdateUser(c *gin.Context) {
 	}
 }
 
+// DeleteUser godoc
+// @Summary      Delete a user
+// @Description  Delete user by name (admin only)
+// @Tags         user
+// @Produce      json
+// @Param        name path string true "Username"
+// @Success      200 "User deleted successfully"
+// @Failure      403 {object} ErrorResponse "Forbidden - admin only"
+// @Failure      500 {object} ErrorResponse "Failed to delete user"
+// @Security     CookieAuth
+// @Router       /user/{name} [delete]
 func DeleteUser(c *gin.Context) {
 	name := c.Param("name")
 
@@ -72,6 +111,16 @@ func DeleteUser(c *gin.Context) {
 	}
 }
 
+// GetUser godoc
+// @Summary      Get all users
+// @Description  List all users (admin only)
+// @Tags         user
+// @Produce      json
+// @Success      200 {array} core.PublicUser "List of users"
+// @Failure      403 {object} ErrorResponse "Forbidden - admin only"
+// @Failure      500 {object} ErrorResponse "Failed to retrieve users"
+// @Security     CookieAuth
+// @Router       /user [get]
 func GetUser(c *gin.Context) {
 	user := authenticateUser(c)
 
