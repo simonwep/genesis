@@ -34,7 +34,7 @@ func DataByKey(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "key must match " + core.Config.AppKeyPattern.String()})
 	} else if data, err := core.GetDataFromUser(user.Name, key); err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
-			c.JSON(http.StatusNoContent, gin.H{"error": "key not found"})
+			c.Status(http.StatusNoContent)
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve unit of data"})
 			core.Logger.Error("failed to retrieve unit of data", zap.Error(err))
