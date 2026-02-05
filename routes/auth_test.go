@@ -1,11 +1,13 @@
 package routes
 
 import (
-	"github.com/simonwep/genesis/core"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/simonwep/genesis/core"
+	"github.com/stretchr/testify/assert"
 )
 
 func loginUser(t *testing.T) string {
@@ -77,6 +79,7 @@ func TestLogin(t *testing.T) {
 }
 
 func TestLogout(t *testing.T) {
+	core.ResetDatabase()
 	token := loginUser(t)
 
 	tryAuthorizedPost("/logout", AuthorizedBodyConfig{
@@ -95,6 +98,7 @@ func TestLogout(t *testing.T) {
 }
 
 func TestReLogin(t *testing.T) {
+	core.ResetDatabase()
 	token := loginUser(t)
 
 	tryAuthorizedPost("/login", AuthorizedBodyConfig{
@@ -108,6 +112,120 @@ func TestReLogin(t *testing.T) {
 		Token: "",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusBadRequest, response.Code)
+		},
+	})
+}
+
+func TestLoginRateLimitExistingUser(t *testing.T) {
+	core.ResetDatabase()
+
+	for i := 0; i < int(core.Config.LoginMaxAttempts); i++ {
+		tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+			Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+			Handler: func(response *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusUnauthorized, response.Code)
+			},
+		})
+	}
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusTooManyRequests, response.Code)
+			body := response.Body.String()
+			assert.Contains(t, body, "retry_after")
+		},
+	})
+}
+
+func TestLoginRateLimitDoesNotLeakForNonExistingUser(t *testing.T) {
+	core.ResetDatabase()
+
+	for i := 0; i < int(core.Config.LoginMaxAttempts)+2; i++ { // even more attempts
+		tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+			Body: "{\"user\": \"unknown\", \"password\": \"wrong\"}",
+			Handler: func(response *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusUnauthorized, response.Code)
+			},
+		})
+	}
+}
+
+func TestLoginLockResetsAfterSuccessAndDurationProgression(t *testing.T) {
+	core.ResetDatabase()
+
+	maxLoginAttempts := int(core.Config.LoginMaxAttempts)
+
+	// Fail until first lock
+	for i := 0; i < maxLoginAttempts; i++ {
+		tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+			Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+			Handler: func(response *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusUnauthorized, response.Code)
+			},
+		})
+	}
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusTooManyRequests, response.Code)
+			body := response.Body.String()
+			assert.Contains(t, body, "\"retry_after\":2")
+		},
+	})
+
+	// Fail again to reach second lock duration
+	time.Sleep(2100 * time.Millisecond)
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusUnauthorized, response.Code)
+		},
+	})
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusTooManyRequests, response.Code)
+			body := response.Body.String()
+			assert.Contains(t, body, "\"retry_after\":5")
+		},
+	})
+
+	// Respond with correct retry_after
+	time.Sleep(1100 * time.Millisecond)
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusTooManyRequests, response.Code)
+			body := response.Body.String()
+			assert.Contains(t, body, "\"retry_after\":3")
+		},
+	})
+
+	// Successful login resets the lockout
+	time.Sleep(4100 * time.Millisecond)
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"hgEiPCZP\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+
+	for i := 0; i < maxLoginAttempts; i++ {
+		tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+			Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+			Handler: func(response *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusUnauthorized, response.Code)
+			},
+		})
+	}
+
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"foo\", \"password\": \"wrong\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusTooManyRequests, response.Code)
 		},
 	})
 }

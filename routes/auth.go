@@ -1,12 +1,13 @@
 package routes
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/simonwep/genesis/core"
 	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 type loginBody struct {
@@ -38,10 +39,37 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Check if rate limiting is enabled
+	rateLimitingEnabled := core.Config.LoginMaxAttempts > 0 && len(core.Config.LoginLockDurations) > 0
+
+	if rateLimitingEnabled {
+		// Only enforce for existing users to avoid enumeration signal on non-existent
+		if exists, _ := core.GetUser(body.User); exists != nil {
+			if locked, retryAfter := core.IsLockedOut(body.User); locked {
+				c.JSON(http.StatusTooManyRequests, gin.H{
+					"error":           "account temporarily locked",
+					"retry_after":     int64(retryAfter / time.Second),
+					"retry_timestamp": time.Now().Unix(),
+				})
+				return
+			}
+		}
+	}
+
 	user, err := core.AuthenticateUser(body.User, body.Password)
 	if user == nil || err != nil {
+		if rateLimitingEnabled {
+			if exists, _ := core.GetUser(body.User); exists != nil {
+				core.ApplyFailedAttempt(body.User)
+			}
+		}
+
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "username or password incorrect"})
 		return
+	}
+
+	if rateLimitingEnabled {
+		core.ResetFailedLoginAttempts(user.Name)
 	}
 
 	if refreshToken, err := core.CreateAuthToken(user); err != nil {

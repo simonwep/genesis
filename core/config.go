@@ -27,6 +27,8 @@ type AppConfig struct {
 	AppKeyPattern      *regexp.Regexp
 	AppDataMaxSize     int64
 	AppKeysPerUser     int64
+	LoginMaxAttempts   int64
+	LoginLockDurations []time.Duration
 }
 
 var Config = func() AppConfig {
@@ -46,6 +48,8 @@ var Config = func() AppConfig {
 		AppKeyPattern:      regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
 		AppDataMaxSize:     parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
 		AppKeysPerUser:     parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
+		LoginMaxAttempts:   parseInt(os.Getenv("GENESIS_LOGIN_MAX_ATTEMPTS")),
+		LoginLockDurations: parseDurations(os.Getenv("GENESIS_LOGIN_LOCKOUT_DURATIONS")),
 	}
 
 	Logger.Debug("build info",
@@ -88,6 +92,32 @@ func parseInt(str string) int64 {
 	} else {
 		return value
 	}
+}
+
+func parseDurations(raw string) []time.Duration {
+	list := make([]time.Duration, 0)
+
+	if len(strings.TrimSpace(raw)) == 0 {
+		return list
+	}
+
+	for _, item := range strings.Split(raw, ",") {
+		trimmed := strings.TrimSpace(item)
+
+		if len(trimmed) == 0 {
+			continue
+		}
+
+		d, err := time.ParseDuration(trimmed)
+		if err != nil {
+			Logger.Warn("invalid duration entry in GENESIS_LOGIN_LOCKOUT_DURATIONS", zap.String("value", trimmed), zap.Error(err))
+			continue
+		}
+
+		list = append(list, d)
+	}
+
+	return list
 }
 
 func resolvePath(path string) string {

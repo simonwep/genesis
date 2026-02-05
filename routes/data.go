@@ -2,12 +2,13 @@ package routes
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
+
 	"github.com/dgraph-io/badger/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/simonwep/genesis/core"
 	"go.uber.org/zap"
-	"net/http"
-	"strconv"
 )
 
 func Data(c *gin.Context) {
@@ -30,7 +31,7 @@ func DataByKey(c *gin.Context) {
 	if user == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 	} else if !core.Config.AppKeyPattern.MatchString(key) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "key must match " + core.Config.AppKeyPattern.String()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "key must match " + core.Config.AppKeyPattern.String()})
 	} else if data, err := core.GetDataFromUser(user.Name, key); err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
 			c.JSON(http.StatusNoContent, gin.H{"error": "key not found"})

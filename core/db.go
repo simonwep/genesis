@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
-	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/dgraph-io/badger/v4"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -140,9 +141,9 @@ func GetUser(name string) (*User, error) {
 	if err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
 			return nil, nil
-		} else {
-			return nil, fmt.Errorf("failed to retrieve data: %w", err)
 		}
+
+		return nil, fmt.Errorf("failed to retrieve data: %w", err)
 	}
 
 	var user User
@@ -244,9 +245,9 @@ func SetDataForUser(name string, key string, data []byte) error {
 
 	if err := txn.Set(buildUserDataKey(name, key), data); err != nil {
 		return err
-	} else {
-		return txn.Commit()
 	}
+
+	return txn.Commit()
 }
 
 func DeleteDataFromUser(name string, key string) error {
@@ -255,9 +256,9 @@ func DeleteDataFromUser(name string, key string) error {
 
 	if err := txn.Delete(buildUserDataKey(name, key)); err != nil {
 		return err
-	} else {
-		return txn.Commit()
 	}
+
+	return txn.Commit()
 }
 
 func GetDataFromUser(name string, key string) ([]byte, error) {
@@ -349,9 +350,9 @@ func IsTokenBlacklisted(jti string) (bool, error) {
 
 	if errors.Is(err, badger.ErrKeyNotFound) {
 		return false, nil
-	} else {
-		return item != nil, err
 	}
+
+	return item != nil, err
 }
 
 func ResetDatabase() {
@@ -360,6 +361,7 @@ func ResetDatabase() {
 	}
 
 	InitializeUsers()
+	ResetAllFailedLoginAttempts()
 }
 
 func InitializeUsers() {
@@ -417,9 +419,9 @@ func hashPassword(pwd string) (string, error) {
 
 	if err != nil {
 		return "", err
-	} else {
-		return string(hashed), err
 	}
+
+	return string(hashed), err
 }
 
 func init() {
