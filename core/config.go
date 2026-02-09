@@ -33,23 +33,23 @@ type AppConfig struct {
 
 var Config = func() AppConfig {
 	config := AppConfig{
-		DbPath:             resolvePath(os.Getenv("GENESIS_DB_PATH")),
-		BaseUrl:            os.Getenv("GENESIS_BASE_URL"),
-		JWTSecret:          []byte(os.Getenv("GENESIS_JWT_SECRET")),
-		JWTExpiration:      time.Duration(parseInt(os.Getenv("GENESIS_JWT_TOKEN_EXPIRATION"))) * time.Minute,
-		JWTCookieAllowHTTP: os.Getenv("GENESIS_JWT_COOKIE_ALLOW_HTTP") == "true",
-		AppBuildVersion:    os.Getenv("GENESIS_BUILD_VERSION"),
-		AppBuildDate:       os.Getenv("GENESIS_BUILD_DATE"),
-		AppBuildCommit:     os.Getenv("GENESIS_BUILD_COMMIT"),
-		AppGinMode:         os.Getenv("GENESIS_GIN_MODE"),
-		AppPort:            os.Getenv("GENESIS_PORT"),
-		AppUsersToCreate:   parseInitialUserList(os.Getenv("GENESIS_CREATE_USERS")),
-		AppUserPattern:     regexp.MustCompile(os.Getenv("GENESIS_USERNAME_PATTERN")),
-		AppKeyPattern:      regexp.MustCompile(os.Getenv("GENESIS_KEY_PATTERN")),
-		AppDataMaxSize:     parseInt(os.Getenv("GENESIS_DATA_MAX_SIZE")) * 1000,
-		AppKeysPerUser:     parseInt(os.Getenv("GENESIS_KEYS_PER_USER")),
-		LoginMaxAttempts:   parseInt(os.Getenv("GENESIS_LOGIN_MAX_ATTEMPTS")),
-		LoginLockDurations: parseDurations(os.Getenv("GENESIS_LOGIN_LOCKOUT_DURATIONS")),
+		DbPath:             resolvePath(env("GENESIS_DB_PATH")),
+		BaseUrl:            env("GENESIS_BASE_URL"),
+		JWTSecret:          []byte(env("GENESIS_JWT_SECRET")),
+		JWTExpiration:      time.Duration(parseInt(env("GENESIS_JWT_TOKEN_EXPIRATION"))) * time.Minute,
+		JWTCookieAllowHTTP: env("GENESIS_JWT_COOKIE_ALLOW_HTTP") == "true",
+		AppBuildVersion:    env("GENESIS_BUILD_VERSION"),
+		AppBuildDate:       env("GENESIS_BUILD_DATE"),
+		AppBuildCommit:     env("GENESIS_BUILD_COMMIT"),
+		AppGinMode:         env("GENESIS_GIN_MODE"),
+		AppPort:            env("GENESIS_PORT"),
+		AppUsersToCreate:   parseInitialUserList(env("GENESIS_CREATE_USERS")),
+		AppUserPattern:     regexp.MustCompile(env("GENESIS_USERNAME_PATTERN")),
+		AppKeyPattern:      regexp.MustCompile(env("GENESIS_KEY_PATTERN")),
+		AppDataMaxSize:     parseInt(env("GENESIS_DATA_MAX_SIZE")) * 1000,
+		AppKeysPerUser:     parseInt(env("GENESIS_KEYS_PER_USER")),
+		LoginMaxAttempts:   parseInt(env("GENESIS_LOGIN_MAX_ATTEMPTS")),
+		LoginLockDurations: parseDurations(env("GENESIS_LOGIN_LOCKOUT_DURATIONS")),
 	}
 
 	Logger.Debug("build info",
@@ -118,6 +118,21 @@ func parseDurations(raw string) []time.Duration {
 	}
 
 	return list
+}
+
+func env(key string) string {
+	if v := os.Getenv(key + "_FILE"); v != "" {
+		data, err := os.ReadFile(v)
+
+		if err != nil {
+			Logger.Warn("failed to read env file", zap.String("key", key), zap.String("path", v), zap.Error(err))
+			return ""
+		}
+
+		return strings.TrimSpace(string(data))
+	}
+
+	return os.Getenv(key)
 }
 
 func resolvePath(path string) string {

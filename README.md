@@ -45,6 +45,13 @@ Genesis should then be accessible under port `8080`.
 > [!NOTE]
 > You can specify the base-url via the env variable `GENESIS_BASE_URL`.
 
+
+### Env variables
+
+Every `.env`-variable can also be passed with the suffix `_FILE` to read the value from a file, e.g. `GENESIS_JWT_SECRET_FILE=/run/secrets/genesis_jwt_secret`.
+
+This is especially useful for secrets in production environments, where you can use [docker secrets](https://docs.docker.com/engine/swarm/secrets/) to manage your secrets.
+
 ### CLI
 
 Genesis comes with a CLI to manage users.
@@ -69,7 +76,7 @@ The API is kept as simple as possible; there is nothing more than user, data, an
   - Returns `200` if the password was successfully updated, otherwise `400`.
 
 > [!NOTE]
-> The JWT token is returned as a strict same-site, secure and http-only cookie!  
+> The JWT token is returned as a strict same-site, secure and http-only cookie!
 > When changing the password, the new password must fulfill the same requirements for adding a new user.
 
 #### Data endpoints
@@ -80,7 +87,7 @@ The API is kept as simple as possible; there is nothing more than user, data, an
 * `DELETE /data/:key` - Removes the data for `key`, always returns `200`, even if `key` doesn't exist.
 
 > [!NOTE]
-> Validation parameters for those endpoints are defined in [.env](.env.example).  
+> Validation parameters for those endpoints are defined in [.env](.env.example).
 > This includes a key-pattern, the max amount per user, and a size-limit.
 
 #### User management
@@ -93,5 +100,5 @@ The API is kept as simple as possible; there is nothing more than user, data, an
 * `DELETE /user/:name` - Delete a user by `name`.
 
 > [!NOTE]
-> The username is validated against the pattern defined in [.env](.env.example).  
+> The username is validated against the pattern defined in [.env](.env.example).
 > The length must be between `3` and `32`, the password between `8` and `64`.
