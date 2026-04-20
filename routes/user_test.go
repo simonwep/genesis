@@ -1,10 +1,11 @@
 package routes
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUnauthorizedAccess(t *testing.T) {
@@ -150,6 +151,25 @@ func TestUpdateUser(t *testing.T) {
 
 	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
 		Body: "{\"user\":\"foo\", \"password\":\"wK8iVkRO\"}",
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusOK, response.Code)
+		},
+	})
+}
+
+func TestDeleteItself(t *testing.T) {
+	token := loginAdmin(t)
+
+	tryAuthorizedDelete("/user/bar", AuthorizedConfig{
+		Token: token,
+		Handler: func(response *httptest.ResponseRecorder) {
+			assert.Equal(t, http.StatusForbidden, response.Code)
+		},
+	})
+
+	// Ensure the admin can still log in afterwards
+	tryUnauthorizedPost("/login", UnauthorizedBodyConfig{
+		Body: "{\"user\": \"bar\", \"password\": \"EczUR8dn\"}",
 		Handler: func(response *httptest.ResponseRecorder) {
 			assert.Equal(t, http.StatusOK, response.Code)
 		},

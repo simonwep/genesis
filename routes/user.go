@@ -2,18 +2,20 @@ package routes
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/simonwep/genesis/core"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 func CreateUser(c *gin.Context) {
 	validate := validator.New()
+	user := authenticateUser(c)
 	var body core.User
 
-	if !isAsAdminAuthenticated(c) {
+	if user == nil || !user.Admin {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only admins can create users"})
 	} else if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid json"})
@@ -59,9 +61,12 @@ func UpdateUser(c *gin.Context) {
 
 func DeleteUser(c *gin.Context) {
 	name := c.Param("name")
+	user := authenticateUser(c)
 
-	if !isAsAdminAuthenticated(c) {
+	if user == nil || !user.Admin {
 		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+	} else if name == user.Name {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you cannot delete yourself"})
 	} else {
 		if err := core.DeleteUser(name); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete user"})
@@ -83,9 +88,4 @@ func GetUser(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, list)
 	}
-}
-
-func isAsAdminAuthenticated(c *gin.Context) bool {
-	user := authenticateUser(c)
-	return user != nil && user.Admin
 }
