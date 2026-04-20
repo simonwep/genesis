@@ -1,11 +1,13 @@
 package routes
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetAllData(t *testing.T) {
@@ -125,6 +127,43 @@ func TestInvalidKeys(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, response.Code)
 		},
 	})
+}
+
+func TestInvalidKeysAllEndpoints(t *testing.T) {
+	token := loginUser(t)
+
+	invalidKeys := []string{
+		"HsRLrSgCFylAK77aJmvRon0ubjXjzPFtd",
+		"🦧",
+		"foo bar",
+		"foo.bar",
+		"foo$",
+	}
+
+	expectBadRequest := func(response *httptest.ResponseRecorder) {
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Contains(t, response.Body.String(), "key must match")
+	}
+
+	for _, key := range invalidKeys {
+		path := "/data/" + url.PathEscape(key)
+
+		tryAuthorizedPost(path, AuthorizedBodyConfig{
+			Body:    "{\"hello\": \"world!\"}",
+			Token:   token,
+			Handler: expectBadRequest,
+		})
+
+		tryAuthorizedGet(path, AuthorizedConfig{
+			Token:   token,
+			Handler: expectBadRequest,
+		})
+
+		tryAuthorizedDelete(path, AuthorizedConfig{
+			Token:   token,
+			Handler: expectBadRequest,
+		})
+	}
 }
 
 func TestDeleteData(t *testing.T) {

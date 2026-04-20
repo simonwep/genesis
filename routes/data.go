@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -58,6 +59,8 @@ func SetData(c *gin.Context) {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "request entity too large, limit is " + strconv.FormatInt(core.Config.AppDataMaxSize, 10) + " kilobytes"})
 	} else if body, err := c.GetRawData(); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
+	} else if !json.Valid(body) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "body must be valid JSON"})
 	} else if err := core.SetDataForUser(user.Name, key, body); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set data"})
 		core.Logger.Error("failed to set data", zap.Error(err))
@@ -72,6 +75,8 @@ func DeleteData(c *gin.Context) {
 
 	if user == nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	} else if !core.Config.AppKeyPattern.MatchString(key) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "key must match " + core.Config.AppKeyPattern.String()})
 	} else if err := core.DeleteDataFromUser(user.Name, key); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete data"})
 		core.Logger.Error("failed to delete data", zap.Error(err))
