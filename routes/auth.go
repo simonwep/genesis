@@ -108,7 +108,7 @@ func Logout(c *gin.Context) {
 			Value:    "",
 			Path:     "/",
 			Expires:  time.Now(),
-			Secure:   true,
+			Secure:   !core.Config.JWTCookieAllowHTTP,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
 		})
