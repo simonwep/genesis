@@ -1,9 +1,11 @@
 package core
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"time"
 )
 
 type JWTClaim struct {
@@ -24,9 +26,15 @@ func CreateAuthToken(user *User) (string, error) {
 func ParseAuthToken(token string) (*JWTClaim, error) {
 	var claims JWTClaim
 
-	_, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {
-		return Config.JWTSecret, nil
-	})
+	_, err := jwt.ParseWithClaims(token, &claims,
+		func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+			return Config.JWTSecret, nil
+		},
+		jwt.WithValidMethods([]string{"HS256"}),
+	)
 
 	if len(claims.ID) != 0 {
 		blacklisted, err := IsTokenBlacklisted(claims.ID)

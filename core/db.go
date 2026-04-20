@@ -28,6 +28,13 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 )
 
+// dummyHash is used to equalize timing for non-existent users in
+// AuthenticateUser to prevent username enumeration via response timing.
+var dummyHash = func() []byte {
+	h, _ := bcrypt.GenerateFromPassword([]byte("genesis-dummy-password"), bcrypt.DefaultCost)
+	return h
+}()
+
 type User struct {
 	Name     string `json:"name" validate:"required,gte=3,lte=32"`
 	Admin    bool   `json:"admin"`
@@ -47,75 +54,81 @@ type PublicUser struct {
 var database *badger.DB
 
 func CreateUser(user User) error {
-	txn := database.NewTransaction(true)
 	key := buildUserKey(user.Name)
-	defer txn.Discard()
-
-	if existingUser, err := GetUser(user.Name); existingUser != nil {
-		return ErrUserAlreadyExists
-	} else if err != nil {
-		return fmt.Errorf("failed to check if user already exists")
-	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
-	} else if data, err := json.Marshal(User{
+	}
+
+	data, err := json.Marshal(User{
 		Name:     user.Name,
 		Admin:    user.Admin,
 		Password: string(hash),
-	}); err != nil {
+	})
+
+	if err != nil {
 		return fmt.Errorf("failed to create user data: %w", err)
-	} else if err := txn.Set(key, data); err != nil {
-		return fmt.Errorf("failed to store user: %w", err)
-	} else if err := txn.Commit(); err != nil {
-		return fmt.Errorf("failed to commit data: %w", err)
 	}
 
-	return nil
+	return database.Update(func(txn *badger.Txn) error {
+		if _, err := txn.Get(key); err == nil {
+			return ErrUserAlreadyExists
+		} else if !errors.Is(err, badger.ErrKeyNotFound) {
+			return fmt.Errorf("failed to check if user already exists: %w", err)
+		}
+
+		return txn.Set(key, data)
+	})
 }
 
 func UpdateUser(name string, user PartialUser) error {
-	txn := database.NewTransaction(true)
 	key := buildUserKey(name)
-	defer txn.Discard()
 
-	existingUser, err := GetUser(name)
-	if err != nil {
-		if errors.Is(err, badger.ErrKeyNotFound) {
-			return ErrUserNotFound
-		}
-
-		return fmt.Errorf("failed to check if user exists")
-	}
-
-	if user.Password == nil {
-		user.Password = &existingUser.Password
-	} else {
-		if hash, err := hashPassword(*user.Password); err != nil {
+	if user.Password != nil {
+		hash, err := hashPassword(*user.Password)
+		if err != nil {
 			return fmt.Errorf("failed to hash password: %w", err)
-		} else {
-			user.Password = &hash
 		}
+		user.Password = &hash
 	}
 
-	if user.Admin == nil {
-		user.Admin = &existingUser.Admin
-	}
+	return database.Update(func(txn *badger.Txn) error {
+		item, err := txn.Get(key)
+		if err != nil {
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return ErrUserNotFound
+			}
+			return fmt.Errorf("failed to check if user exists: %w", err)
+		}
 
-	if data, err := json.Marshal(User{
-		Name:     name,
-		Admin:    *user.Admin,
-		Password: *user.Password,
-	}); err != nil {
-		return fmt.Errorf("failed to create user data: %w", err)
-	} else if err := txn.Set(key, data); err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
-	} else if err := txn.Commit(); err != nil {
-		return fmt.Errorf("failed to commit data: %w", err)
-	}
+		var existing User
+		if err := item.Value(func(val []byte) error {
+			return json.Unmarshal(val, &existing)
+		}); err != nil {
+			return err
+		}
 
-	return nil
+		if user.Password == nil {
+			user.Password = &existing.Password
+		}
+
+		if user.Admin == nil {
+			user.Admin = &existing.Admin
+		}
+
+		data, err := json.Marshal(User{
+			Name:     name,
+			Admin:    *user.Admin,
+			Password: *user.Password,
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to create user data: %w", err)
+		}
+
+		return txn.Set(key, data)
+	})
 }
 
 func AuthenticateUser(name string, password string) (*User, error) {
@@ -124,6 +137,7 @@ func AuthenticateUser(name string, password string) (*User, error) {
 	if err != nil {
 		return nil, err
 	} else if user == nil {
+		_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(password))
 		return nil, nil
 	} else if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
 		return nil, errors.New("invalid password")
@@ -270,11 +284,7 @@ func GetDataFromUser(name string, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	var data []byte
-	return data, item.Value(func(v []byte) error {
-		*&data = v
-		return nil
-	})
+	return item.ValueCopy(nil)
 }
 
 func GetAllDataFromUser(name string) ([]byte, error) {
@@ -285,28 +295,24 @@ func GetAllDataFromUser(name string) ([]byte, error) {
 	defer it.Close()
 
 	prefix := buildUserDataKey(name, "")
-	data := make([]string, 0)
+	out := make(map[string]json.RawMessage)
 
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 		item := it.Item()
-		key := item.Key()
+		k := string(item.Key()[len(prefix):])
 
-		err := item.Value(func(v []byte) error {
-			if rawKey, err := json.Marshal(string(key[len(prefix):])); err != nil {
-				return err
-			} else {
-				data = append(data, string(rawKey)+":"+string(v))
-			}
-
-			return nil
-		})
-
+		v, err := item.ValueCopy(nil)
 		if err != nil {
-			break
+			return nil, err
 		}
+
+		if !json.Valid(v) {
+			continue
+		}
+		out[k] = v
 	}
 
-	return []byte("{" + strings.Join(data, ",") + "}"), nil
+	return json.Marshal(out)
 }
 
 func GetDataCountForUser(name, includedKey string) int64 {
@@ -442,7 +448,7 @@ func init() {
 
 	// Shutdown database gracefully
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		sig := <-sigs
