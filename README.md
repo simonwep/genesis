@@ -16,6 +16,9 @@
 
 <br/>
 
+> [!WARNING]
+> This project is retired and content merged into [ocular](https://github.com/simonwep/ocular).
+
 ### Summary
 
 This project is designed specifically for small, personal projects requiring a straightforward, simple storage API that you can host yourself, including simplified user management.
